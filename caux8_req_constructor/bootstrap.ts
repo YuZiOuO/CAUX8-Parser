@@ -6,14 +6,13 @@ import { constructQuestionRequestBody } from "./factory/question.ts";
 
 export async function importQuestion(
   q: RequiredQuestion,
-  courseId: number,
   MoodleSession: string,
   sesskey: string
 ) {
   const cli = httpClientFactory(MoodleSession);
 
   const createQuestionEndpoint = "http://page.cau.edu.cn/course/modedit.php";
-  const req = cli.post(createQuestionEndpoint, constructQuestionRequestBody(courseId, q))
+  const req = cli.post(createQuestionEndpoint, constructQuestionRequestBody(q))
   const res = await req;
   console.log(res.status);
   console.log(res.headers);

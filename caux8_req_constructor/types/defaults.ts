@@ -1,13 +1,13 @@
-export function appendDefaultBasicInfo({ courseId, section, sesskey, name }: { courseId: number, section: number, sesskey: string, name: string }, form: FormData): FormData{
+export function appendDefaultBasicInfo(rinfo:RequiredBasicInfo, form: FormData): FormData{
     const info:BasicInfo = {
         assignmenttype: "onlinejudge",
         type: "onlinejudge",
         mform_showadvanced_last: 0,
         conditiongraderepeats: 1,
         conditionfieldrepeats: 1,
-        course: courseId,
+        course: rinfo.course,
         coursemodule: "",
-        section: section,
+        section: rinfo.section,
         module: 1,
         modulename: "assignment",
         instance: "",
@@ -15,9 +15,9 @@ export function appendDefaultBasicInfo({ courseId, section, sesskey, name }: { c
         update: 0,
         return: 0,
         sr: 0,
-        sesskey: sesskey,
+        sesskey: rinfo.sesskey,
         _qf__mod_assignment_mod_form: 1,
-        name: name,
+        name: rinfo.name,
     }
 
     for (const [key, value] of Object.entries(info)) {
