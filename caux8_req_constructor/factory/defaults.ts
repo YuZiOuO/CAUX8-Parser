@@ -69,7 +69,7 @@ export function appendSubmissionSettings( form: FormData,override?: Partial<Subm
         preventlate: 0,
         maxbytes: 20971520,
         resubmit: 1,
-        var1: 20,
+        var1: 1,
         var2: 1,
         var3: 1,
         emailteachers: 0,

@@ -16,7 +16,6 @@ export async function importQuestion(
   const req = cli.post(createQuestionEndpoint, constructQuestionRequestBody(q))
   const res = await req;
   console.log(res.status);
-  console.log(res.headers);
 
   // 获取题目ID
   if(res.headers.location === undefined){
@@ -34,7 +33,6 @@ export async function importQuestion(
   const req2 = cli.post(createTestCaseEndpoint, constructTestCaseRequestBody(sesskey,Number(id),q.testCases))
   const res2 = await req2;
   console.log(res2.status);
-  console.log(res2.headers);    
 }
 
 function httpClientFactory(moodleSession: string) {
