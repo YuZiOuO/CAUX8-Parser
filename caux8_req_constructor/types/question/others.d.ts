@@ -16,58 +16,6 @@ interface AvailabilityTime {
     timedue?: AvailabilityTimeOption;
 }
 
-
-// 提交设置
-interface SubmissionSettings {
-    // 在课程页面显示简介
-    // showdescription?: number; // 这个字段在请求中没有被发送，原因未知
-
-    // 禁止迟交
-    preventlate?: number;
-
-    // 源文件最大长度
-    maxbytes?: number;
-    /**
-     * <option value="20971520">20MB</option>
-     * <option value="10485760">10MB</option>
-     * <option value="5242880">5MB</option>
-     * <option value="2097152">2MB</option>
-     * <option value="1048576" selected="selected">1MB</option>
-     * <option value="512000">500KB</option>
-     * <option value="102400">100KB</option>
-     * <option value="51200">50KB</option>
-     * <option value="10240">10KB</option>
-     * <option value="0">课程上传限制 (20MB)</option>
-     */
-
-    // 学生是否可删除作业
-    resubmit?: number;
-
-    // 最多可传几个文件
-    var1?: number; // 1-20
-
-    // 是否允许备注
-    var2?: number;
-
-    // 在可以提交作业前隐藏作业说明
-    var3?: number;
-
-    // 用Email提醒教师
-    emailteachers?: number;
-}
-
-// 成绩设置
-interface GradeSettings {
-    // 成绩
-    grade?: number; // 0=没有成绩 -1=量表 1-100
-
-    // 评分方式
-    advancedgradingmethod_submission?: string; // "" = 直接打分,guide = 评分指南,rubric = 量规
-
-    // 成绩类别
-    gradecat?: number; // 168 = 未分类
-}
-
 // 通用模块设置
 interface CommonModuleSettings {
     // 小组模式
@@ -144,10 +92,4 @@ interface AccessRestrictions {
     showavailability?: number; // 1 = 活动以暗色显示，并显示受限信息,0 = 完全隐藏活动
 }
 
-// 其他
-interface RedirectSettings {
-    submitbutton?: '保存并预览'; // 如果存在该字段，重定向跳转到题目页
-    submitbutton2?: '保存并返回课程'; // 如果存在该字段，重定向跳转到课程页
-    // 如果都不存在，返回200
-}
 

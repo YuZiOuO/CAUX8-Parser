@@ -12,4 +12,8 @@ const q: RequiredQuestion = {
     testCases: []
 }
 
-await importQuestion(q,'76iuuf6rr0tvrgcq23g2leo0b2','T72pRCtqOa')
+try{
+    await importQuestion(q,'76iuuf6rr0tvrgcq23g2leo0b2','T72pRCtqOa')
+}catch(e){
+    
+}

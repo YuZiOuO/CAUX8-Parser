@@ -49,7 +49,6 @@ interface RequiredDescription {
   text: string;
 }
 
-// 描述
 interface Description extends RequiredDescription {
   format: 1; //语义未知
   // itemid: number; // 这个item_id要从上游请求里拿
