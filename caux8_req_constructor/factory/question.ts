@@ -5,8 +5,8 @@ export function constructQuestionRequestBody(q: RequiredQuestion): FormData {
     appendBasicInfo(q.basicInfo, form);
     appendDescription(q.description.text, form);
     appendRedirectSettings(form);
-    appendSubmissionSettings(form);
-    appendOJSettings(form);
-    appendGradeSettings(form);
+    // appendSubmissionSettings(form);
+    // appendOJSettings(form);
+    // appendGradeSettings(form);
     return form
 }

@@ -11,15 +11,27 @@ export async function importQuestion(
 ) {
   const cli = httpClientFactory(MoodleSession);
 
+  // 创建题目
   const createQuestionEndpoint = "http://page.cau.edu.cn/course/modedit.php";
   const req = cli.post(createQuestionEndpoint, constructQuestionRequestBody(q))
   const res = await req;
   console.log(res.status);
   console.log(res.headers);
 
-  const redirectUrl = ''
+  // 获取题目ID
+  if(res.headers.location === undefined){
+    throw new Error("题目可能已经创建，但未获取重定向链接。");
+  }
+  const url = new URL(res.headers.location);
+  console.log(url.href);
+  const id = url.searchParams.get("id");
+  if(id === null){
+    throw new Error("无法从重定向URL中获取题目ID。");
+  }
+
+  // 创建测试用例
   const createTestCaseEndpoint = 'http://page.cau.edu.cn/mod/assignment/type/onlinejudge/testcase.php'
-  const req2 = cli.post(createTestCaseEndpoint, constructTestCaseRequestBody(sesskey,redirectUrl,q.testCases))
+  const req2 = cli.post(createTestCaseEndpoint, constructTestCaseRequestBody(sesskey,Number(id),q.testCases))
   const res2 = await req2;
   console.log(res2.status);
   console.log(res2.headers);    
@@ -42,9 +54,8 @@ function httpClientFactory(moodleSession: string) {
     axios.create({
       withCredentials: true,
       jar: jar,
-      beforeRedirect: (options, res) => {
-        console.log("Redirecting to:", res.headers.location);
-      },
+      maxRedirects: 0, // 不自动跟随重定向
+      validateStatus: (status) => status >= 200 && status < 400, // 允许重定向响应
     })
   );
   return client;
