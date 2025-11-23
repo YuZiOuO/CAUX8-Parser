@@ -1,3 +1,5 @@
+# 该脚本读取MoodleSession，通过构造请求解析出sesskey
+
 import re
 from typing import Dict, List
 import urllib

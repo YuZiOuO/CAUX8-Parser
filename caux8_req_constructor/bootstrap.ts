@@ -4,6 +4,12 @@ import { Cookie, CookieJar } from "tough-cookie";
 import { constructTestCaseRequestBody } from "./factory/testcase.ts";
 import { constructQuestionRequestBody } from "./factory/question.ts";
 
+/**
+ * 顶层封装，给定题目数据，MoodleSession 和 sesskey，完成题目导入。
+ * @param q 题目数据
+ * @param MoodleSession MoodleSession，通过浏览器获取
+ * @param sesskey Sesskey，通过浏览器或脚本获取
+ */
 export async function importQuestion(
   q: RequiredQuestion,
   MoodleSession: string,
