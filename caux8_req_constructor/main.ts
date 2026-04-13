@@ -1,4 +1,5 @@
-import { importQuestion } from "./bootstrap.ts";
+import { importQuestion } from "./bootstrap.js";
+import type { RequiredQuestion } from "./types.js";
 
 const q: RequiredQuestion = {
   basicInfo: {
@@ -21,7 +22,10 @@ const q: RequiredQuestion = {
 };
 
 try {
-  await importQuestion(q, "76iuuf6rr0tvrgcq23g2leo0b2", "T72pRCtqOa");
+  const result = await importQuestion(q, {
+    moodleSession: "76iuuf6rr0tvrgcq23g2leo0b2",
+  });
+  console.log(result);
 } catch (e) {
   console.log(e);
 }

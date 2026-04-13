@@ -1,66 +1,54 @@
-import axios from "axios";
-import { wrapper } from "axios-cookiejar-support";
-import { Cookie, CookieJar } from "tough-cookie";
-import { constructTestCaseRequestBody } from "./factory/testcase.ts";
-import { constructQuestionRequestBody } from "./factory/question.ts";
+import { ENDPOINTS, CAU_BASE_URL } from "./config.js";
+import { constructQuestionRequestBody } from "./factory/question.js";
+import { constructTestCaseRequestBody } from "./factory/testcase.js";
+import { createHttpClient } from "./http-client.js";
+import type {
+  ImportCredentials,
+  ImportQuestionResult,
+  RequiredQuestion,
+} from "./types.js";
 
 /**
- * 顶层封装，给定题目数据，MoodleSession 和 sesskey，完成题目导入。
+ * 顶层封装，给定题目数据和 MoodleSession，完成题目导入。
  * @param q 题目数据
- * @param MoodleSession MoodleSession，通过浏览器获取
- * @param sesskey Sesskey，通过浏览器或脚本获取
+ * @param credentials 登录凭证
  */
 export async function importQuestion(
   q: RequiredQuestion,
-  MoodleSession: string,
-  sesskey: string
-) {
-  const cli = httpClientFactory(MoodleSession);
+  credentials: ImportCredentials
+): Promise<ImportQuestionResult> {
+  const cli = createHttpClient(credentials.moodleSession);
 
   // 创建题目
-  const createQuestionEndpoint = "http://page.cau.edu.cn/course/modedit.php";
-  const req = cli.post(createQuestionEndpoint, constructQuestionRequestBody(q))
-  const res = await req;
-  console.log(res.status);
+  const res = await cli.post(
+    ENDPOINTS.createQuestion,
+    constructQuestionRequestBody(q)
+  );
 
   // 获取题目ID
-  if(res.headers.location === undefined){
+  if (res.headers.location === undefined) {
     throw new Error("题目可能已经创建，但未获取重定向链接。");
   }
-  const url = new URL(res.headers.location);
-  console.log(url.href);
+  const url = new URL(res.headers.location, CAU_BASE_URL);
   const id = url.searchParams.get("id");
-  if(id === null){
+  if (id === null) {
     throw new Error("无法从重定向URL中获取题目ID。");
+  }
+  const questionId = Number(id);
+  if (Number.isNaN(questionId)) {
+    throw new Error(`题目ID不是有效数字: ${id}`);
   }
 
   // 创建测试用例
-  const createTestCaseEndpoint = 'http://page.cau.edu.cn/mod/assignment/type/onlinejudge/testcase.php'
-  const req2 = cli.post(createTestCaseEndpoint, constructTestCaseRequestBody(sesskey,Number(id),q.testCases))
-  const res2 = await req2;
-  console.log(res2.status);
-}
+  const res2 = await cli.post(
+    ENDPOINTS.createTestCase,
+    constructTestCaseRequestBody(q.basicInfo.sesskey, questionId, q.testCases)
+  );
 
-function httpClientFactory(moodleSession: string) {
-  const jar = new CookieJar();
-  jar.setCookie(
-    new Cookie({
-      key: "MoodleSession",
-      value: moodleSession,
-      domain: "page.cau.edu.cn",
-      path: "/",
-      httpOnly: true,
-      secure: false,
-    }),
-    "http://page.cau.edu.cn/"
-  );
-  const client = wrapper(
-    axios.create({
-      withCredentials: true,
-      jar: jar,
-      maxRedirects: 0, // 不自动跟随重定向
-      validateStatus: (status) => status >= 200 && status < 400, // 允许重定向响应
-    })
-  );
-  return client;
+  return {
+    questionId,
+    redirectUrl: url.toString(),
+    questionResponseStatus: res.status,
+    testCaseResponseStatus: res2.status,
+  };
 }

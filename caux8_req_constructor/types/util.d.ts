@@ -1,1 +1,0 @@
-type numberBoolean = 0 | 1;

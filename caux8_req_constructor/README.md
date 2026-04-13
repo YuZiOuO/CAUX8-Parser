@@ -34,8 +34,8 @@ pnpm install
     参考 `main.ts` 文件，构造你的题目数据对象 `RequiredQuestion`，并调用 `importQuestion` 函数。
 
     ```typescript
-    // 示例 (参考 main.ts)
-    import { importQuestion } from "./bootstrap.ts";
+    import { importQuestion } from "./bootstrap.js";
+    import type { RequiredQuestion } from "./types.js";
 
     const q: RequiredQuestion = {
       basicInfo: {
@@ -57,9 +57,11 @@ pnpm install
       ],
     };
 
-    // 执行导入
-    // 参数: 题目对象, MoodleSession, sesskey
-    await importQuestion(q, "你的MoodleSession字符串", "你的sesskey");
+    const result = await importQuestion(q, {
+      moodleSession: "你的MoodleSession字符串",
+    });
+
+    console.log(result.questionId);
     ```
 
 3.  **运行**:
@@ -70,16 +72,29 @@ pnpm install
 ```
 caux8_req_constructor/
 ├── auth.py             # Python 辅助脚本，用于通过 Cookie 获取 sesskey 和解析页面信息
-├── bootstrap.ts        # 核心逻辑文件，包含 importQuestion 函数，负责发送 HTTP 请求流程
+├── bootstrap.ts        # 核心逻辑文件，负责串联“创建题目 -> 导入测试用例”流程
+├── config.ts           # 固定端点、默认配置和跳转策略
+├── form-data.ts        # FormData 填充辅助函数
+├── http-client.ts      # 负责创建携带 MoodleSession 的 HTTP 客户端
 ├── main.ts             # 程序入口示例，展示如何定义题目数据并调用导入功能
 ├── factory/            # 请求体构造工厂目录
 │   ├── defaults.ts     # 包含表单默认值和辅助填充函数
 │   ├── question.ts     # 负责构造创建题目的 FormData 请求体
 │   └── testcase.ts     # 负责构造添加测试用例的 FormData 请求体
-├── types/              # TypeScript 类型定义目录
-│   ├── util.d.ts
-│   ├── question/       # 题目相关类型定义 (basic, grade, oj, etc.)
-│   └── testcase/       # 测试用例相关类型定义
+├── types.ts            # 所有显式导出的 TypeScript 类型
 ├── package.json        # 项目依赖配置
 └── tsconfig.json       # TypeScript 编译配置
 ```
+
+## 4. 当前结构的重构思路
+
+这次整理主要做了三件事：
+
+*   **把全局 `.d.ts` 类型改成模块化导出**：避免类型污染全局命名空间，也让 IDE 跳转和引用更直接。
+*   **把默认值和 HTTP 逻辑拆开**：默认表单配置放到 `config.ts`，Cookie 客户端放到 `http-client.ts`，`bootstrap.ts` 只保留业务流程。
+*   **消掉重复输入的 `sesskey`**：`sesskey` 仍然在题目定义里维护，但导入函数只再接收 `MoodleSession`，减少凭证不一致的风险。
+
+如果后续继续重构，建议优先做这两步：
+
+*   给 `auth.py` 对应的鉴权流程补一个 TypeScript 版本，避免 Python/TS 双栈维护。
+*   为 `factory/` 增加最基本的请求体快照测试，避免字段调整时无声回归。

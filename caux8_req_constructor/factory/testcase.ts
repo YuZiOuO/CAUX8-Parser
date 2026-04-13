@@ -1,13 +1,5 @@
-function appendTestCaseFormData(
-  index: number,
-  testCase: TestCase,
-  form: FormData
-): FormData {
-  for (const [key, value] of Object.entries(testCase)) {
-    form.append(`${key}[${index}]`, String(value));
-  }
-  return form;
-}
+import { appendFields, appendIndexedFields } from "../form-data.js";
+import type { TestCase, TestCaseRequestBody } from "../types.js";
 
 export function constructTestCaseRequestBody(
   sesskey: string,
@@ -22,16 +14,14 @@ export function constructTestCaseRequestBody(
     TestCase: testCases,
   };
   const form = new FormData();
-  for (const [key, value] of Object.entries(t)) {
-    if (key !== "TestCase") {
-      form.append(key, String(value));
-    } else {
-      const cases = value as TestCase[];
-      cases.forEach((testCase, index) => {
-        appendTestCaseFormData(index, testCase, form);
-      });
-    }
-  }
+
+  appendFields(form, {
+    sesskey: t.sesskey,
+    id: t.id,
+    _qf__testcase_form: t._qf__testcase_form,
+    submitbutton: t.submitbutton,
+  });
+  appendIndexedFields(form, t.TestCase);
 
   return form;
 }
