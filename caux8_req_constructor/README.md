@@ -34,31 +34,34 @@ pnpm install
     参考 `main.ts` 文件，构造你的题目数据对象 `RequiredQuestion`，并调用 `importQuestion` 函数。
 
     ```typescript
-    import { importQuestion } from "./bootstrap.js";
-    import type { RequiredQuestion } from "./types.js";
+    import type { Problem } from "./core/problem.js";
+    import { caux8QuestionAdapter } from "./adapters/index.js";
 
-    const q: RequiredQuestion = {
-      basicInfo: {
-        name: "题目名称",
-        course: 141, // 课程ID
-        section: 10, // 章节ID
-        mform_showadvanced_last: 0,
-        sesskey: "你的sesskey",
+    const problem: Problem = {
+      title: "题目名称",
+      statement: {
+        text: "题目描述内容",
+        format: "plain",
       },
-      description: { text: "题目描述内容" },
       testCases: [
         {
-          caseid: -1,
           input: "1 2\n",
           output: "3\n",
-          subgrade: "1.0",
+          weight: 1.0,
           feedback: "",
         },
       ],
     };
 
-    const result = await importQuestion(q, {
-      moodleSession: "你的MoodleSession字符串",
+    const result = await caux8QuestionAdapter.upload(problem, {
+      target: {
+        course: 141,
+        section: 10,
+        sesskey: "你的sesskey",
+      },
+      credentials: {
+        moodleSession: "你的MoodleSession字符串",
+      },
     });
 
     console.log(result.questionId);
@@ -72,16 +75,22 @@ pnpm install
 ```
 caux8_req_constructor/
 ├── auth.py             # Python 辅助脚本，用于通过 Cookie 获取 sesskey 和解析页面信息
-├── bootstrap.ts        # 核心逻辑文件，负责串联“创建题目 -> 导入测试用例”流程
-├── config.ts           # 固定端点、默认配置和跳转策略
-├── form-data.ts        # FormData 填充辅助函数
-├── http-client.ts      # 负责创建携带 MoodleSession 的 HTTP 客户端
+├── core/               # 平台无关的题目模型
+│   └── problem.ts
+├── adapters/           # 统一适配器协议与注册表
+│   ├── index.ts
+│   └── types.ts
+├── platforms/          # 各平台具体实现
+│   └── caux8/
+│       ├── adapter.ts
+│       ├── config.ts
+│       ├── form-data.ts
+│       ├── http-client.ts
+│       ├── index.ts
+│       ├── types.ts
+│       ├── upload.ts
+│       └── factory/
 ├── main.ts             # 程序入口示例，展示如何定义题目数据并调用导入功能
-├── factory/            # 请求体构造工厂目录
-│   ├── defaults.ts     # 包含表单默认值和辅助填充函数
-│   ├── question.ts     # 负责构造创建题目的 FormData 请求体
-│   └── testcase.ts     # 负责构造添加测试用例的 FormData 请求体
-├── types.ts            # 所有显式导出的 TypeScript 类型
 ├── package.json        # 项目依赖配置
 └── tsconfig.json       # TypeScript 编译配置
 ```
@@ -90,9 +99,9 @@ caux8_req_constructor/
 
 这次整理主要做了三件事：
 
-*   **把全局 `.d.ts` 类型改成模块化导出**：避免类型污染全局命名空间，也让 IDE 跳转和引用更直接。
-*   **把默认值和 HTTP 逻辑拆开**：默认表单配置放到 `config.ts`，Cookie 客户端放到 `http-client.ts`，`bootstrap.ts` 只保留业务流程。
-*   **消掉重复输入的 `sesskey`**：`sesskey` 仍然在题目定义里维护，但导入函数只再接收 `MoodleSession`，减少凭证不一致的风险。
+*   **区分三层职责**：`core/` 负责平台无关题目模型，`adapters/` 负责统一适配器协议，`platforms/` 负责具体平台实现。
+*   **把平台细节收进 `platforms/caux8/`**：默认值、HTTP 客户端、FormData 拼装和上传流程都不再散落在根目录。
+*   **让 UI 可以直接消费 adapter 元数据**：后续界面层可以根据 adapter 提供的字段定义动态渲染目标平台配置表单。
 
 如果后续继续重构，建议优先做这两步：
 
