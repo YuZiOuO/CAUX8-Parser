@@ -2,6 +2,8 @@ mod caux8;
 
 use serde::{Deserialize, Serialize};
 
+use crate::runtime_error::RuntimeCommandError;
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeUploadPayload {
@@ -18,9 +20,14 @@ pub struct RuntimeUploadResult {
 }
 
 #[tauri::command]
-pub async fn upload_problem(payload: RuntimeUploadPayload) -> Result<RuntimeUploadResult, String> {
+pub async fn upload_problem(
+    payload: RuntimeUploadPayload,
+) -> Result<RuntimeUploadResult, RuntimeCommandError> {
     match payload.adapter_id.as_str() {
         "caux8-http" => caux8::upload(payload).await,
-        other => Err(format!("暂不支持的 adapterId: {other}")),
+        other => Err(RuntimeCommandError::new(
+            "unsupported_adapter",
+            format!("暂不支持的 adapterId: {other}"),
+        )),
     }
 }

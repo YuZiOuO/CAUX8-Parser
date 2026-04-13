@@ -3,6 +3,10 @@ import { questionAdapterCatalog } from "@/x8req/adapters/catalog.js";
 import type { ProblemFieldOverride } from "@/x8req/adapters/types.js";
 import type { DynamicFormState, PrimitiveFormValue } from "@/studio/types";
 import { createDefaultProblem } from "@/studio/default-problem";
+import type {
+  Caux8CourseSection,
+  Caux8SessionInfo,
+} from "@/runtime/session";
 import {
   uploadProblemViaRuntime,
   type RuntimeUploadResult,
@@ -61,7 +65,7 @@ export function useStudioState() {
     resetFormState(credentialConfig, nextCredentials);
   }
 
-  watch(selectedAdapterId, initializeDynamicState, { immediate: true });
+  watch(selectedAdapterId, initializeDynamicState, { immediate: true, flush: "sync" });
 
   const validationErrors = computed(() => selectedAdapter.value.validate(problem));
 
@@ -103,10 +107,21 @@ export function useStudioState() {
       .map((field) => field.label),
   );
 
+  const credentialMissingFields = computed(() =>
+    selectedAdapter.value.definition.credentialFields
+      .filter((field) => field.required)
+      .filter((field) => {
+        const value = credentialConfig[field.key];
+        return value === null || value === "";
+      })
+      .map((field) => field.label),
+  );
+
   const canUpload = computed(
     () =>
       validationErrors.value.length === 0 &&
-      targetMissingFields.value.length === 0,
+      targetMissingFields.value.length === 0 &&
+      credentialMissingFields.value.length === 0,
   );
 
   const payloadPreview = computed(() => {
@@ -128,7 +143,7 @@ export function useStudioState() {
 
   async function uploadCurrentProblem(): Promise<RuntimeUploadResult> {
     if (!canUpload.value) {
-      throw new Error("请先修正校验错误和目标配置");
+      throw new Error("请先修正校验错误、目标配置和凭证");
     }
 
     const question = selectedAdapter.value.toPlatformQuestion(
@@ -148,6 +163,21 @@ export function useStudioState() {
     }
   }
 
+  function applyCaux8Session(
+    session: Caux8SessionInfo,
+    moodleSession: string,
+    section?: Caux8CourseSection,
+  ) {
+    selectedAdapterId.value = "caux8-http";
+    targetConfig.course = session.courseId;
+    targetConfig.sesskey = session.sesskey;
+    credentialConfig.moodleSession = moodleSession;
+
+    if (section) {
+      targetConfig.section = section.section;
+    }
+  }
+
   return {
     adapterOptions,
     selectedAdapterId,
@@ -158,10 +188,12 @@ export function useStudioState() {
     validationErrors,
     validationErrorMap,
     targetMissingFields,
+    credentialMissingFields,
     payloadPreview,
     uploading,
     canUpload,
     getFieldOverride,
     uploadCurrentProblem,
+    applyCaux8Session,
   };
 }

@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import { createDiscreteApi } from "naive-ui";
 import {
   NAlert,
   NConfigProvider,
   NForm,
+  NFormItem,
   NGlobalStyle,
   NLayout,
   NLayoutContent,
@@ -12,10 +14,21 @@ import {
   NSelect,
   NSpace,
   NSplit,
+  NTabPane,
+  NTabs,
   NTag,
 } from "naive-ui";
+import Caux8SessionPanel from "@/components/Caux8SessionPanel.vue";
 import ProblemEditorPanel from "@/components/ProblemEditorPanel.vue";
 import StudioSidebar from "@/components/StudioSidebar.vue";
+import {
+  RuntimeCommandError,
+  type RuntimeCommandErrorInfo,
+} from "@/runtime/errors";
+import type {
+  Caux8CourseSection,
+  Caux8SessionInfo,
+} from "@/runtime/session";
 import { useStudioState } from "@/studio/use-studio-state";
 
 const {
@@ -28,16 +41,21 @@ const {
   validationErrors,
   validationErrorMap,
   targetMissingFields,
+  credentialMissingFields,
   payloadPreview,
   uploading,
   getFieldOverride,
   uploadCurrentProblem,
+  applyCaux8Session,
 } = useStudioState();
 
 const { message } = createDiscreteApi(["message"]);
+const uploadError = ref<RuntimeCommandErrorInfo | null>(null);
+const activePage = ref("upload");
 
 async function handleUpload() {
   try {
+    uploadError.value = null;
     const result = await uploadCurrentProblem();
 
     if (result.ok) {
@@ -47,8 +65,28 @@ async function handleUpload() {
 
     message.error(result.message ?? "上传失败");
   } catch (error) {
-    message.error(error instanceof Error ? error.message : String(error));
+    if (error instanceof RuntimeCommandError) {
+      uploadError.value = error.info;
+      message.error(error.info.message);
+      return;
+    }
+
+    const fallbackMessage = error instanceof Error ? error.message : String(error);
+    uploadError.value = {
+      code: "unhandled_frontend_error",
+      message: fallbackMessage,
+    };
+    message.error(fallbackMessage);
   }
+}
+
+function handleApplySession(
+  session: Caux8SessionInfo,
+  moodleSession: string,
+  section?: Caux8CourseSection,
+) {
+  applyCaux8Session(session, moodleSession, section);
+  activePage.value = "upload";
 }
 </script>
 
@@ -74,57 +112,69 @@ async function handleUpload() {
         content-style="padding: 16px; height: calc(100vh - 73px); display: flex; flex-direction: column;"
       >
         <n-space vertical size="medium" style="flex: 1">
-          <n-form inline size="small">
-            <n-form-item label="Target Adapter">
-              <n-select
-                v-model:value="selectedAdapterId"
-                :options="adapterOptions"
-                style="width: 300px"
-              />
-            </n-form-item>
-            <n-alert
-              v-if="selectedAdapter"
-              type="info"
-              :show-icon="true"
-              style="margin-left: 16px"
-            >
-              {{ selectedAdapter.definition.description }}
-            </n-alert>
-          </n-form>
+          <n-tabs v-model:value="activePage" type="line" animated>
+            <n-tab-pane name="session" tab="CAUX8 Session">
+              <Caux8SessionPanel @apply="handleApplySession" />
+            </n-tab-pane>
 
-          <n-split
-            direction="horizontal"
-            style="flex: 1"
-            :default-size="0.6"
-            :min="0.3"
-            :max="0.8"
-          >
-            <template #1>
-              <n-layout
-                native-scrollbar
-                style="height: 100%; padding-right: 8px"
-              >
-                <ProblemEditorPanel
-                  :problem="problem"
-                  :validation-error-map="validationErrorMap"
-                  :get-field-override="getFieldOverride"
-                />
-              </n-layout>
-            </template>
-            <template #2>
-              <StudioSidebar
-                :selected-adapter="selectedAdapter"
-                :target-config="targetConfig"
-                :credential-config="credentialConfig"
-                :validation-errors="validationErrors"
-                :target-missing-fields="targetMissingFields"
-                :payload-preview="payloadPreview"
-                :problem="problem"
-                :uploading="uploading"
-                @upload="handleUpload"
-              />
-            </template>
-          </n-split>
+            <n-tab-pane name="upload" tab="Problem Upload">
+              <n-space vertical size="medium">
+                <n-form inline size="small">
+                  <n-form-item label="Target Adapter">
+                    <n-select
+                      v-model:value="selectedAdapterId"
+                      :options="adapterOptions"
+                      style="width: 300px"
+                    />
+                  </n-form-item>
+                  <n-alert
+                    v-if="selectedAdapter"
+                    type="info"
+                    :show-icon="true"
+                    style="margin-left: 16px"
+                  >
+                    {{ selectedAdapter.definition.description }}
+                  </n-alert>
+                </n-form>
+
+                <n-split
+                  direction="horizontal"
+                  style="height: calc(100vh - 190px)"
+                  :default-size="0.6"
+                  :min="0.3"
+                  :max="0.8"
+                >
+                  <template #1>
+                    <n-layout
+                      native-scrollbar
+                      style="height: 100%; padding-right: 8px"
+                    >
+                      <ProblemEditorPanel
+                        :problem="problem"
+                        :validation-error-map="validationErrorMap"
+                        :get-field-override="getFieldOverride"
+                      />
+                    </n-layout>
+                  </template>
+                  <template #2>
+                    <StudioSidebar
+                      :selected-adapter="selectedAdapter"
+                      :target-config="targetConfig"
+                      :credential-config="credentialConfig"
+                      :validation-errors="validationErrors"
+                      :target-missing-fields="targetMissingFields"
+                      :credential-missing-fields="credentialMissingFields"
+                      :payload-preview="payloadPreview"
+                      :problem="problem"
+                      :uploading="uploading"
+                      :upload-error="uploadError"
+                      @upload="handleUpload"
+                    />
+                  </template>
+                </n-split>
+              </n-space>
+            </n-tab-pane>
+          </n-tabs>
         </n-space>
       </n-layout-content>
     </n-layout>

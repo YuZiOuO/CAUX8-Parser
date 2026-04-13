@@ -5,42 +5,47 @@ import {
   RuntimeCommandError,
   type RuntimeCommandErrorInfo,
 } from "@/runtime/errors";
-import type { DynamicFormState } from "@/studio/types";
 
-export interface RuntimeUploadPayload {
-  adapterId: string;
-  question: unknown;
-  credentials: DynamicFormState;
+export interface ResolveCaux8SessionRequest {
+  moodleSession: string;
+  courseId: number;
 }
 
-export interface RuntimeUploadResult {
-  ok: boolean;
-  message?: string;
-  data?: unknown;
+export interface Caux8CourseSection {
+  id: string;
+  section: number;
+  name?: string | null;
 }
 
-export async function uploadProblemViaRuntime(
-  payload: RuntimeUploadPayload,
-): Promise<RuntimeUploadResult> {
+export interface Caux8SessionInfo {
+  courseId: number;
+  sesskey: string;
+  loginInfo?: string | null;
+  sections: Caux8CourseSection[];
+}
+
+export async function resolveCaux8Session(
+  request: ResolveCaux8SessionRequest,
+): Promise<Caux8SessionInfo> {
   if (!hasTauriInvokeRuntime()) {
     throw createMissingTauriRuntimeError();
   }
 
   try {
-    return await invoke<RuntimeUploadResult>("upload_problem", {
-      payload,
+    return await invoke<Caux8SessionInfo>("resolve_caux8_session", {
+      request,
     });
   } catch (error) {
-    throw normalizeUploadError(error);
+    throw normalizeSessionError(error);
   }
 }
 
-function normalizeUploadError(error: unknown): RuntimeCommandError {
+function normalizeSessionError(error: unknown): RuntimeCommandError {
   if (error instanceof RuntimeCommandError) {
     return error;
   }
 
-  if (isBackendUploadError(error)) {
+  if (isBackendError(error)) {
     return new RuntimeCommandError({
       code: error.code,
       message: error.message,
@@ -50,26 +55,15 @@ function normalizeUploadError(error: unknown): RuntimeCommandError {
     });
   }
 
-  if (error instanceof Error) {
-    return new RuntimeCommandError({
-      code: "frontend_runtime_error",
-      message: error.message,
-      detail: error.stack,
-      raw: error,
-    });
-  }
-
   return new RuntimeCommandError({
-    code: "unknown_upload_error",
-    message: typeof error === "string" ? error : "上传失败",
-    detail: stringifyUnknown(error),
+    code: "resolve_session_error",
+    message: error instanceof Error ? error.message : "解析 CAUX8 会话失败",
+    detail: error instanceof Error ? error.stack : stringifyUnknown(error),
     raw: error,
   });
 }
 
-function isBackendUploadError(
-  value: unknown,
-): value is RuntimeCommandErrorInfo {
+function isBackendError(value: unknown): value is RuntimeCommandErrorInfo {
   return (
     typeof value === "object" &&
     value !== null &&

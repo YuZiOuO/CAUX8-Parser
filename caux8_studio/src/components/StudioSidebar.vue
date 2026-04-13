@@ -17,6 +17,7 @@ import {
 } from "naive-ui";
 import type { QuestionAdapterCatalogEntry } from "@/x8req/adapters/catalog.js";
 import type { DynamicFormState, PrimitiveFormValue } from "@/studio/types";
+import type { RuntimeCommandErrorInfo } from "@/runtime/errors";
 import type { Problem } from "@/x8req/core/problem.js";
 
 const props = defineProps<{
@@ -25,9 +26,11 @@ const props = defineProps<{
   credentialConfig: DynamicFormState;
   validationErrors: string[];
   targetMissingFields: string[];
+  credentialMissingFields: string[];
   payloadPreview: unknown;
   problem: Problem;
   uploading: boolean;
+  uploadError: RuntimeCommandErrorInfo | null;
 }>();
 
 const emit = defineEmits<{
@@ -36,6 +39,16 @@ const emit = defineEmits<{
 
 function stringify(value: unknown) {
   return JSON.stringify(value, null, 2);
+}
+
+function stringifyUploadError(error: RuntimeCommandErrorInfo) {
+  return stringify({
+    code: error.code,
+    status: error.status,
+    message: error.message,
+    detail: error.detail,
+    raw: error.raw,
+  });
 }
 
 function getTextValue(state: DynamicFormState, key: string): string {
@@ -77,7 +90,9 @@ function getFieldOptions(field: {
 
 const canUpload = computed(
   () =>
-    props.validationErrors.length === 0 && props.targetMissingFields.length === 0,
+    props.validationErrors.length === 0 &&
+    props.targetMissingFields.length === 0 &&
+    props.credentialMissingFields.length === 0,
 );
 </script>
 
@@ -97,6 +112,15 @@ const canUpload = computed(
       >
         一键上传
       </n-button>
+
+      <n-alert
+        v-if="uploadError"
+        type="error"
+        title="上传失败"
+        :show-icon="true"
+      >
+        {{ uploadError.message }}
+      </n-alert>
     </n-space>
 
     <n-tabs type="line" size="small" animated>
@@ -171,6 +195,15 @@ const canUpload = computed(
             缺少目标平台字段：{{ fieldLabel }}
           </n-alert>
 
+          <n-alert
+            v-for="fieldLabel in credentialMissingFields"
+            :key="fieldLabel"
+            type="warning"
+            :show-icon="true"
+          >
+            缺少凭证字段：{{ fieldLabel }}
+          </n-alert>
+
           <n-divider title-placement="left">Platform Payload</n-divider>
           <n-code
             :code="stringify(payloadPreview)"
@@ -183,6 +216,21 @@ const canUpload = computed(
               padding: 8px;
             "
           />
+
+          <template v-if="uploadError">
+            <n-divider title-placement="left">Upload Error Details</n-divider>
+            <n-code
+              :code="stringifyUploadError(uploadError)"
+              language="json"
+              style="
+                max-height: 240px;
+                overflow: auto;
+                border: 1px solid var(--n-border-color);
+                border-radius: 4px;
+                padding: 8px;
+              "
+            />
+          </template>
 
           <n-divider title-placement="left">Raw Problem</n-divider>
           <n-code

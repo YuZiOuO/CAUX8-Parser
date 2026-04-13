@@ -71,3 +71,10 @@ invoke("upload_problem", {
 
 这样可以直接绕开浏览器 CORS，同时也不会把 cookie/session 处理暴露在页面层。
 平台映射逻辑仍然只保留在 `src/x8req/` 这一份，桌面端只负责上传。
+
+CAUX8 Session 页集成了旧 `auth.py` 的核心逻辑：
+
+- 输入浏览器里拿到的 `MoodleSession` 和课程 `Course ID`
+- 通过 Tauri command 请求 `course/view.php`
+- 从课程页解析 `sesskey`、登录信息和 `section-*` 列表
+- 点击“应用到上传配置”后写入上传页的 `course`、`section`、`sesskey` 和 `MoodleSession`

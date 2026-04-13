@@ -7,6 +7,8 @@ use reqwest::{
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+use crate::runtime_error::{truncate_detail, RuntimeCommandError};
+
 use super::{RuntimeUploadPayload, RuntimeUploadResult};
 
 const CAU_BASE_URL: &str = "http://page.cau.edu.cn";
@@ -97,39 +99,72 @@ struct ImportQuestionResult {
     test_case_response_status: u16,
 }
 
-pub async fn upload(payload: RuntimeUploadPayload) -> Result<RuntimeUploadResult, String> {
-    let question: RequiredQuestion =
-        serde_json::from_value(payload.question).map_err(|err| format!("题目载荷解析失败: {err}"))?;
-    let credentials: Caux8Credentials = serde_json::from_value(payload.credentials)
-        .map_err(|err| format!("凭证解析失败: {err}"))?;
+pub async fn upload(
+    payload: RuntimeUploadPayload,
+) -> Result<RuntimeUploadResult, RuntimeCommandError> {
+    let question: RequiredQuestion = serde_json::from_value(payload.question).map_err(|err| {
+        RuntimeCommandError::new("invalid_question_payload", "题目载荷解析失败")
+            .with_detail(err.to_string())
+    })?;
+    let credentials: Caux8Credentials =
+        serde_json::from_value(payload.credentials).map_err(|err| {
+            RuntimeCommandError::new("invalid_credentials_payload", "凭证解析失败")
+                .with_detail(err.to_string())
+        })?;
 
     let client = Client::builder()
         .redirect(Policy::none())
         .build()
-        .map_err(|err| format!("创建 HTTP client 失败: {err}"))?;
+        .map_err(|err| {
+            RuntimeCommandError::new("http_client_error", "创建 HTTP client 失败")
+                .with_detail(err.to_string())
+        })?;
 
     let question_response = client
         .post(CREATE_QUESTION_ENDPOINT)
-        .header(COOKIE, format!("MoodleSession={}", credentials.moodle_session))
+        .header(
+            COOKIE,
+            format!("MoodleSession={}", credentials.moodle_session),
+        )
         .multipart(build_question_form(&question))
         .send()
         .await
-        .map_err(|err| format!("创建题目失败: {err}"))?;
+        .map_err(|err| {
+            RuntimeCommandError::new("create_question_request_error", "创建题目请求失败")
+                .with_detail(err.to_string())
+        })?;
 
     let question_status = question_response.status().as_u16();
-    let location = question_response
-        .headers()
-        .get(LOCATION)
-        .ok_or_else(|| "题目可能已经创建，但未获取重定向链接。".to_string())?
-        .to_str()
-        .map_err(|err| format!("重定向链接格式不合法: {err}"))?;
+    let location = question_response.headers().get(LOCATION).cloned();
+
+    let Some(location) = location else {
+        let body = question_response
+            .text()
+            .await
+            .unwrap_or_else(|err| format!("读取响应 body 失败: {err}"));
+        return Err(RuntimeCommandError::new(
+            "missing_question_redirect",
+            "题目可能已经创建，但未获取重定向链接。",
+        )
+        .with_status(question_status)
+        .with_detail(truncate_detail(body)));
+    };
+
+    let location = location.to_str().map_err(|err| {
+        RuntimeCommandError::new("invalid_question_redirect", "重定向链接格式不合法")
+            .with_status(question_status)
+            .with_detail(err.to_string())
+    })?;
 
     let redirect_url = resolve_redirect_url(location)?;
     let question_id = extract_question_id(&redirect_url)?;
 
     let testcase_response = client
         .post(CREATE_TESTCASE_ENDPOINT)
-        .header(COOKIE, format!("MoodleSession={}", credentials.moodle_session))
+        .header(
+            COOKIE,
+            format!("MoodleSession={}", credentials.moodle_session),
+        )
         .multipart(build_testcase_form(
             &question.basic_info.sesskey,
             question_id,
@@ -137,40 +172,73 @@ pub async fn upload(payload: RuntimeUploadPayload) -> Result<RuntimeUploadResult
         ))
         .send()
         .await
-        .map_err(|err| format!("创建测试点失败: {err}"))?;
+        .map_err(|err| {
+            RuntimeCommandError::new("create_testcase_request_error", "创建测试点请求失败")
+                .with_detail(err.to_string())
+        })?;
+
+    let testcase_status = testcase_response.status().as_u16();
+
+    if !testcase_response.status().is_success() && !testcase_response.status().is_redirection() {
+        let body = testcase_response
+            .text()
+            .await
+            .unwrap_or_else(|err| format!("读取响应 body 失败: {err}"));
+        return Err(RuntimeCommandError::new(
+            "create_testcase_response_error",
+            "创建测试点响应状态异常",
+        )
+        .with_status(testcase_status)
+        .with_detail(truncate_detail(body)));
+    }
 
     let result = ImportQuestionResult {
         question_id,
         redirect_url,
         question_response_status: question_status,
-        test_case_response_status: testcase_response.status().as_u16(),
+        test_case_response_status: testcase_status,
     };
 
     Ok(RuntimeUploadResult {
         ok: true,
         message: Some(format!("上传完成，题目 ID: {}", result.question_id)),
-        data: Some(serde_json::to_value(result).map_err(|err| format!("序列化上传结果失败: {err}"))?),
+        data: Some(serde_json::to_value(result).map_err(|err| {
+            RuntimeCommandError::new("serialize_upload_result_error", "序列化上传结果失败")
+                .with_detail(err.to_string())
+        })?),
     })
 }
 
-fn resolve_redirect_url(location: &str) -> Result<String, String> {
-    let base = Url::parse(CAU_BASE_URL).map_err(|err| format!("基础 URL 不合法: {err}"))?;
+fn resolve_redirect_url(location: &str) -> Result<String, RuntimeCommandError> {
+    let base = Url::parse(CAU_BASE_URL).map_err(|err| {
+        RuntimeCommandError::new("invalid_base_url", "基础 URL 不合法").with_detail(err.to_string())
+    })?;
     base.join(location)
         .map(|url| url.to_string())
-        .map_err(|err| format!("拼接重定向链接失败: {err}"))
+        .map_err(|err| {
+            RuntimeCommandError::new("join_redirect_url_error", "拼接重定向链接失败")
+                .with_detail(err.to_string())
+        })
 }
 
-fn extract_question_id(redirect_url: &str) -> Result<u64, String> {
-    let url = Url::parse(redirect_url).map_err(|err| format!("重定向链接不合法: {err}"))?;
+fn extract_question_id(redirect_url: &str) -> Result<u64, RuntimeCommandError> {
+    let url = Url::parse(redirect_url).map_err(|err| {
+        RuntimeCommandError::new("invalid_redirect_url", "重定向链接不合法")
+            .with_detail(err.to_string())
+    })?;
     let question_id = url
         .query_pairs()
         .find(|(key, _)| key == "id")
         .map(|(_, value)| value.into_owned())
-        .ok_or_else(|| "无法从重定向 URL 中获取题目 ID。".to_string())?;
+        .ok_or_else(|| {
+            RuntimeCommandError::new("missing_question_id", "无法从重定向 URL 中获取题目 ID。")
+                .with_detail(redirect_url.to_string())
+        })?;
 
-    question_id
-        .parse::<u64>()
-        .map_err(|err| format!("题目 ID 不是有效数字: {err}"))
+    question_id.parse::<u64>().map_err(|err| {
+        RuntimeCommandError::new("invalid_question_id", "题目 ID 不是有效数字")
+            .with_detail(err.to_string())
+    })
 }
 
 fn build_question_form(question: &RequiredQuestion) -> Form {
@@ -237,8 +305,16 @@ fn build_question_form(question: &RequiredQuestion) -> Form {
     );
 
     let submission = &question.submission_settings;
-    push_field(&mut fields, "preventlate", submission.preventlate.unwrap_or(0));
-    push_field(&mut fields, "maxbytes", submission.maxbytes.unwrap_or(20971520));
+    push_field(
+        &mut fields,
+        "preventlate",
+        submission.preventlate.unwrap_or(0),
+    );
+    push_field(
+        &mut fields,
+        "maxbytes",
+        submission.maxbytes.unwrap_or(20971520),
+    );
     push_field(&mut fields, "resubmit", submission.resubmit.unwrap_or(1));
     push_field(&mut fields, "var1", submission.var1.unwrap_or(1));
     push_field(&mut fields, "var2", submission.var2.unwrap_or(1));
@@ -275,18 +351,22 @@ fn build_testcase_form(sesskey: &str, question_id: u64, testcases: &[TestCase]) 
         push_field(&mut fields, format!("caseid[{index}]"), testcase.caseid);
         push_field(&mut fields, format!("input[{index}]"), &testcase.input);
         push_field(&mut fields, format!("output[{index}]"), &testcase.output);
-        push_field(&mut fields, format!("feedback[{index}]"), &testcase.feedback);
-        push_field(&mut fields, format!("subgrade[{index}]"), &testcase.subgrade);
+        push_field(
+            &mut fields,
+            format!("feedback[{index}]"),
+            &testcase.feedback,
+        );
+        push_field(
+            &mut fields,
+            format!("subgrade[{index}]"),
+            &testcase.subgrade,
+        );
     }
 
     build_form(fields)
 }
 
-fn push_field(
-    fields: &mut Vec<(String, String)>,
-    key: impl Into<String>,
-    value: impl ToString,
-) {
+fn push_field(fields: &mut Vec<(String, String)>, key: impl Into<String>, value: impl ToString) {
     fields.push((key.into(), value.to_string()));
 }
 
