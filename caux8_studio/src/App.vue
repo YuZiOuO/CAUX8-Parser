@@ -30,8 +30,6 @@ const {
   targetMissingFields,
   payloadPreview,
   uploading,
-  runtimeLabel,
-  runtimeHint,
   getFieldOverride,
   uploadCurrentProblem,
 } = useStudioState();
@@ -123,8 +121,6 @@ async function handleUpload() {
                 :payload-preview="payloadPreview"
                 :problem="problem"
                 :uploading="uploading"
-                :runtime-label="runtimeLabel"
-                :runtime-hint="runtimeHint"
                 @upload="handleUpload"
               />
             </template>

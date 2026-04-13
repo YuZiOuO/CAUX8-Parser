@@ -28,8 +28,6 @@ const props = defineProps<{
   payloadPreview: unknown;
   problem: Problem;
   uploading: boolean;
-  runtimeLabel: string;
-  runtimeHint: string;
 }>();
 
 const emit = defineEmits<{
@@ -87,7 +85,7 @@ const canUpload = computed(
   <n-layout native-scrollbar style="height: 100%; padding-left: 8px">
     <n-space vertical>
       <n-alert type="info" :show-icon="true">
-        {{ runtimeHint }}
+        上传默认通过 Tauri command 执行，前端只负责编辑与适配。
       </n-alert>
 
       <n-button
@@ -98,7 +96,6 @@ const canUpload = computed(
         @click="emit('upload')"
       >
         一键上传
-        {{ runtimeLabel }}
       </n-button>
     </n-space>
 

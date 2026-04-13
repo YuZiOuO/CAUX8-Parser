@@ -1,0 +1,28 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "CAUX8 Studio",
+  "version": "0.1.0",
+  "identifier": "com.kanata.caux8studio",
+  "build": {
+    "beforeDevCommand": "bun dev",
+    "devUrl": "http://localhost:4173",
+    "beforeBuildCommand": "bun run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "CAUX8 Studio",
+        "width": 1440,
+        "height": 960,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": false
+  }
+}

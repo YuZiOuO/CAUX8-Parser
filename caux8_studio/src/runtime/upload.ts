@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import type { DynamicFormState } from "@/studio/types";
 
 export interface RuntimeUploadPayload {
@@ -12,32 +13,31 @@ export interface RuntimeUploadResult {
   data?: unknown;
 }
 
-interface TauriCore {
-  invoke<T>(command: string, args?: Record<string, unknown>): Promise<T>;
-}
-
 declare global {
   interface Window {
-    __TAURI__?: {
-      core?: TauriCore;
+    __TAURI_INTERNALS__?: {
+      invoke?: unknown;
     };
   }
 }
 
-export function isTauriRuntime() {
-  return typeof window !== "undefined" && !!window.__TAURI__?.core?.invoke;
+function hasTauriInvokeRuntime() {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.__TAURI_INTERNALS__?.invoke === "function"
+  );
 }
 
 export async function uploadProblemViaRuntime(
   payload: RuntimeUploadPayload,
 ): Promise<RuntimeUploadResult> {
-  if (!isTauriRuntime()) {
+  if (!hasTauriInvokeRuntime()) {
     throw new Error(
-      "浏览器模式下不直接上传。要避免 CORS，建议通过 Tauri command 在桌面端执行上传。",
+      "当前不在 Tauri runtime 中。请使用 `bun run tauri:dev` 启动桌面端后再执行上传。",
     );
   }
 
-  return window.__TAURI__!.core!.invoke<RuntimeUploadResult>("upload_problem", {
+  return invoke<RuntimeUploadResult>("upload_problem", {
     payload,
   });
 }

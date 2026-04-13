@@ -4,7 +4,6 @@ import type { ProblemFieldOverride } from "@/x8req/adapters/types.js";
 import type { DynamicFormState, PrimitiveFormValue } from "@/studio/types";
 import { createDefaultProblem } from "@/studio/default-problem";
 import {
-  isTauriRuntime,
   uploadProblemViaRuntime,
   type RuntimeUploadResult,
 } from "@/runtime/upload";
@@ -127,16 +126,6 @@ export function useStudioState() {
     }
   });
 
-  const runtimeLabel = computed(() =>
-    isTauriRuntime() ? "(Tauri Runtime)" : "(Browser Preview)",
-  );
-
-  const runtimeHint = computed(() =>
-    isTauriRuntime()
-      ? "当前已检测到 Tauri runtime，可通过 command 执行真实上传。"
-      : "当前是浏览器模式。要避免 CORS，建议打包成 Tauri 后由 command 执行上传。",
-  );
-
   async function uploadCurrentProblem(): Promise<RuntimeUploadResult> {
     if (!canUpload.value) {
       throw new Error("请先修正校验错误和目标配置");
@@ -172,8 +161,6 @@ export function useStudioState() {
     payloadPreview,
     uploading,
     canUpload,
-    runtimeLabel,
-    runtimeHint,
     getFieldOverride,
     uploadCurrentProblem,
   };
