@@ -13,6 +13,7 @@ import {
   NGlobalStyle,
   NGrid,
   NGridItem,
+  NIcon,
   NInput,
   NInputNumber,
   NLayout,
@@ -27,6 +28,7 @@ import {
   NTabPane,
   NTag,
   NText,
+  NTooltip,
 } from "naive-ui";
 import { questionAdapterCatalog } from "@/x8req/adapters/catalog.js";
 import type { Problem, ProblemTestCase } from "@/x8req/core/problem.js";
@@ -124,6 +126,19 @@ watch(selectedAdapterId, initializeDynamicState, { immediate: true });
 const validationErrors = computed(() =>
   selectedAdapter.value.validate(problem),
 );
+
+// 将验证错误列表解析为以字段路径为 key 的对象，方便对齐到具体表单项
+const validationErrorMap = computed(() => {
+  const map: Record<string, string> = {};
+  for (const err of validationErrors.value) {
+    // 简单提取可能的路径（例如："testCases[0].weight xxxx" 提取为 "testCases[0].weight"）
+    const match = err.match(/^([\w\[\].]+)/);
+    if (match) {
+      map[match[1]] = err;
+    }
+  }
+  return map;
+});
 
 const targetMissingFields = computed(() =>
   selectedAdapter.value.definition.targetFields
@@ -307,12 +322,28 @@ function updateBoolean(
                     <n-form label-placement="top" size="small">
                       <n-grid :cols="24" :x-gap="16">
                         <n-grid-item :span="24" :m-span="12">
-                          <n-form-item label="Title">
+                          <n-form-item>
+                            <template #label>
+                              题目名称
+                              <n-text
+                                depth="3"
+                                style="font-size: 12px; margin-left: 6px"
+                                >title</n-text
+                              >
+                            </template>
                             <n-input v-model:value="problem.title" />
                           </n-form-item>
                         </n-grid-item>
                         <n-grid-item :span="24" :m-span="12">
-                          <n-form-item label="External ID">
+                          <n-form-item>
+                            <template #label>
+                              外部ID
+                              <n-text
+                                depth="3"
+                                style="font-size: 12px; margin-left: 6px"
+                                >externalId</n-text
+                              >
+                            </template>
                             <n-input
                               v-model:value="problem.metadata!.externalId"
                             />
@@ -320,7 +351,15 @@ function updateBoolean(
                         </n-grid-item>
 
                         <n-grid-item :span="24">
-                          <n-form-item label="Statement">
+                          <n-form-item>
+                            <template #label>
+                              题目描述
+                              <n-text
+                                depth="3"
+                                style="font-size: 12px; margin-left: 6px"
+                                >statement</n-text
+                              >
+                            </template>
                             <n-input
                               v-model:value="problem.statement.text"
                               type="textarea"
@@ -330,7 +369,15 @@ function updateBoolean(
                         </n-grid-item>
 
                         <n-grid-item :span="24">
-                          <n-form-item label="General Feedback">
+                          <n-form-item>
+                            <template #label>
+                              通用反馈
+                              <n-text
+                                depth="3"
+                                style="font-size: 12px; margin-left: 6px"
+                                >generalFeedback</n-text
+                              >
+                            </template>
                             <n-input
                               v-model:value="problem.generalFeedback!.text"
                               type="textarea"
@@ -340,7 +387,15 @@ function updateBoolean(
                         </n-grid-item>
 
                         <n-grid-item :span="24" :m-span="24">
-                          <n-form-item label="Tags">
+                          <n-form-item>
+                            <template #label>
+                              题库标签
+                              <n-text
+                                depth="3"
+                                style="font-size: 12px; margin-left: 6px"
+                                >tags</n-text
+                              >
+                            </template>
                             <n-input
                               :value="(problem.metadata?.tags ?? []).join(', ')"
                               @update:value="
@@ -360,7 +415,15 @@ function updateBoolean(
                     <n-form label-placement="top" size="small">
                       <n-grid :cols="24" :x-gap="16">
                         <n-grid-item :span="24" :m-span="12">
-                          <n-form-item label="Language">
+                          <n-form-item>
+                            <template #label>
+                              目标语言
+                              <n-text
+                                depth="3"
+                                style="font-size: 12px; margin-left: 6px"
+                                >language</n-text
+                              >
+                            </template>
                             <n-input
                               v-model:value="problem.execution!.language"
                             />
@@ -368,7 +431,15 @@ function updateBoolean(
                         </n-grid-item>
 
                         <n-grid-item :span="24" :m-span="12">
-                          <n-form-item label="Compile Only">
+                          <n-form-item>
+                            <template #label>
+                              仅编译
+                              <n-text
+                                depth="3"
+                                style="font-size: 12px; margin-left: 6px"
+                                >compileOnly</n-text
+                              >
+                            </template>
                             <n-switch
                               :value="problem.execution?.compileOnly ?? false"
                               @update:value="
@@ -400,7 +471,15 @@ function updateBoolean(
                         </n-grid-item>
 
                         <n-grid-item :span="24" :m-span="8">
-                          <n-form-item label="Total Grade">
+                          <n-form-item>
+                            <template #label>
+                              总分
+                              <n-text
+                                depth="3"
+                                style="font-size: 12px; margin-left: 6px"
+                                >totalGrade</n-text
+                              >
+                            </template>
                             <n-input-number
                               v-model:value="problem.grading!.totalGrade"
                               :min="0"
@@ -410,7 +489,15 @@ function updateBoolean(
                         </n-grid-item>
 
                         <n-grid-item :span="24" :m-span="12">
-                          <n-form-item label="Presentation Error Ratio">
+                          <n-form-item>
+                            <template #label>
+                              PE惩罚系数
+                              <n-text
+                                depth="3"
+                                style="font-size: 12px; margin-left: 6px"
+                                >presentationErrorRatio</n-text
+                              >
+                            </template>
                             <n-input-number
                               v-model:value="
                                 problem.grading!.presentationErrorRatio
@@ -441,7 +528,28 @@ function updateBoolean(
                           <n-form label-placement="top" size="small">
                             <n-grid :cols="24" :x-gap="16">
                               <n-grid-item :span="24" :m-span="12">
-                                <n-form-item label="Input">
+                                <n-form-item
+                                  :validation-status="
+                                    validationErrorMap[
+                                      `testCases[${index}].input`
+                                    ]
+                                      ? 'error'
+                                      : undefined
+                                  "
+                                  :feedback="
+                                    validationErrorMap[
+                                      `testCases[${index}].input`
+                                    ]
+                                  "
+                                >
+                                  <template #label>
+                                    输入
+                                    <n-text
+                                      depth="3"
+                                      style="font-size: 12px; margin-left: 6px"
+                                      >input</n-text
+                                    >
+                                  </template>
                                   <n-input
                                     v-model:value="value.input"
                                     type="textarea"
@@ -450,7 +558,28 @@ function updateBoolean(
                                 </n-form-item>
                               </n-grid-item>
                               <n-grid-item :span="24" :m-span="12">
-                                <n-form-item label="Output">
+                                <n-form-item
+                                  :validation-status="
+                                    validationErrorMap[
+                                      `testCases[${index}].output`
+                                    ]
+                                      ? 'error'
+                                      : undefined
+                                  "
+                                  :feedback="
+                                    validationErrorMap[
+                                      `testCases[${index}].output`
+                                    ]
+                                  "
+                                >
+                                  <template #label>
+                                    输出
+                                    <n-text
+                                      depth="3"
+                                      style="font-size: 12px; margin-left: 6px"
+                                      >output</n-text
+                                    >
+                                  </template>
                                   <n-input
                                     v-model:value="value.output"
                                     type="textarea"
@@ -459,12 +588,54 @@ function updateBoolean(
                                 </n-form-item>
                               </n-grid-item>
                               <n-grid-item :span="24">
-                                <n-form-item label="Feedback">
+                                <n-form-item
+                                  :validation-status="
+                                    validationErrorMap[
+                                      `testCases[${index}].feedback`
+                                    ]
+                                      ? 'error'
+                                      : undefined
+                                  "
+                                  :feedback="
+                                    validationErrorMap[
+                                      `testCases[${index}].feedback`
+                                    ]
+                                  "
+                                >
+                                  <template #label>
+                                    反馈
+                                    <n-text
+                                      depth="3"
+                                      style="font-size: 12px; margin-left: 6px"
+                                      >feedback</n-text
+                                    >
+                                  </template>
                                   <n-input v-model:value="value.feedback" />
                                 </n-form-item>
                               </n-grid-item>
                               <n-grid-item :span="24" :m-span="6">
-                                <n-form-item label="Weight">
+                                <n-form-item
+                                  :validation-status="
+                                    validationErrorMap[
+                                      `testCases[${index}].weight`
+                                    ]
+                                      ? 'error'
+                                      : undefined
+                                  "
+                                  :feedback="
+                                    validationErrorMap[
+                                      `testCases[${index}].weight`
+                                    ]
+                                  "
+                                >
+                                  <template #label>
+                                    计分权重
+                                    <n-text
+                                      depth="3"
+                                      style="font-size: 12px; margin-left: 6px"
+                                      >weight</n-text
+                                    >
+                                  </template>
                                   <n-input-number
                                     v-model:value="value.weight"
                                     :min="0"
@@ -475,7 +646,28 @@ function updateBoolean(
                                 </n-form-item>
                               </n-grid-item>
                               <n-grid-item :span="24" :m-span="6">
-                                <n-form-item label="Kind">
+                                <n-form-item
+                                  :validation-status="
+                                    validationErrorMap[
+                                      `testCases[${index}].kind`
+                                    ]
+                                      ? 'error'
+                                      : undefined
+                                  "
+                                  :feedback="
+                                    validationErrorMap[
+                                      `testCases[${index}].kind`
+                                    ]
+                                  "
+                                >
+                                  <template #label>
+                                    种类
+                                    <n-text
+                                      depth="3"
+                                      style="font-size: 12px; margin-left: 6px"
+                                      >kind</n-text
+                                    >
+                                  </template>
                                   <n-select
                                     v-model:value="value.kind"
                                     :options="testcaseKindOptions"
@@ -483,7 +675,28 @@ function updateBoolean(
                                 </n-form-item>
                               </n-grid-item>
                               <n-grid-item :span="24" :m-span="6">
-                                <n-form-item label="Visibility">
+                                <n-form-item
+                                  :validation-status="
+                                    validationErrorMap[
+                                      `testCases[${index}].visibility`
+                                    ]
+                                      ? 'error'
+                                      : undefined
+                                  "
+                                  :feedback="
+                                    validationErrorMap[
+                                      `testCases[${index}].visibility`
+                                    ]
+                                  "
+                                >
+                                  <template #label>
+                                    可见性
+                                    <n-text
+                                      depth="3"
+                                      style="font-size: 12px; margin-left: 6px"
+                                      >visibility</n-text
+                                    >
+                                  </template>
                                   <n-select
                                     v-model:value="value.visibility"
                                     :options="testcaseVisibilityOptions"
