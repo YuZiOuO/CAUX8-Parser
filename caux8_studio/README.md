@@ -34,25 +34,32 @@ sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicat
 
 当前前端分层：
 
-- `src/x8req/`: 平台无关题目模型 + adapter 定义 + CAUX8 平台映射与上传实现
+- `src/x8req/`: 平台无关题目模型 + adapter 目录 + 平台映射与导出/上传实现
 - `src/studio/`: Studio 页面状态、默认题目、动态表单状态
 - `src/components/`: 纯界面组件，尽量不直接接触平台上传细节
 - `src/runtime/`: Tauri command 调用边界
 - `src-tauri/`: 桌面端后端，负责真实 HTTP 上传
 
-一键上传链路：
+CAUX8 上传链路：
 
 1. `ProblemEditorPanel` 编辑通用 `Problem`
-2. `StudioSidebar` 收集目标平台配置和凭证
-3. `useStudioState` 做校验、生成平台 payload，并触发上传
-4. `src/runtime/upload.ts` 直接调用 Tauri `upload_problem`
+2. 在输出页选择 `CAUX8` adapter，并填写目标配置和凭证
+3. `useStudioState` 做校验、生成平台提交体，并触发上传
+4. `src/runtime/upload.ts` 直接调用 Tauri `submit_problem`
 5. `src-tauri` 根据 `adapterId` 分发到具体平台上传器
 6. CAUX8 上传器提交题目请求，再提交测试点请求
+
+Moodle XML 导出链路：
+
+1. `ProblemEditorPanel` 编辑通用 `Problem`
+2. 在输出页选择 `Moodle XML` adapter
+3. `useStudioState` 做校验并生成 XML 预览
+4. 点击“导出 XML”后复制到剪贴板，后续可再接 Tauri 保存文件
 
 当前约定的 Tauri command 形状：
 
 ```ts
-invoke("upload_problem", {
+invoke("submit_problem", {
   payload: {
     adapterId: string,
     question: unknown,
@@ -72,14 +79,14 @@ invoke("upload_problem", {
 这样可以直接绕开浏览器 CORS，同时也不会把 cookie/session 处理暴露在页面层。
 平台映射逻辑仍然只保留在 `src/x8req/` 这一份，桌面端只负责上传。
 
-CAUX8 Session 页集成了旧 `auth.py` 的核心逻辑：
+CAUX8 Session 页内置了会话解析逻辑：
 
 - 输入浏览器里拿到的 `MoodleSession` 和课程 `Course ID`
 - 通过 Tauri command 请求 `course/view.php`
 - 从课程页解析 `sesskey`、登录信息和 `section-*` 列表
 - 点击“应用到上传配置”后写入上传页的 `course`、`section`、`sesskey` 和 `MoodleSession`
 
-Problem Import 页迁移了 `caux8_moodle_parser` 的核心逻辑：
+Problem Import 页已经内置了旧 parser 的核心逻辑：
 
 - 粘贴 FPS XML
 - 或粘贴 YBT JSON，并可额外提供测试文件名到文件内容的 JSON 映射
@@ -87,6 +94,3 @@ Problem Import 页迁移了 `caux8_moodle_parser` 的核心逻辑：
 - 转成 Studio 内部通用 `Problem`
 - 点击“应用到题目编辑器”后复用现有 CAUX8 上传链路
 - 同时生成 Moodle CodeRunner XML 预览
-
-Python 包里的 `question/testcase/tag/text`、枚举和 XML 导出器已经迁到 `src/x8req/moodle/`。
-后续可以逐步弃用旧的 `caux8_moodle_parser` Python 包。

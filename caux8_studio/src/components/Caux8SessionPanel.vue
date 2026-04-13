@@ -128,7 +128,7 @@ function handleApply() {
     <n-space vertical size="medium">
       <n-alert type="info" :show-icon="true">
         输入浏览器里的 MoodleSession 和课程 ID，解析 sesskey 与课程 section 列表。
-        这对应旧 Python 脚本读取课程页并解析 logout 链接的逻辑。
+        这对应当前桌面端读取课程页并解析 logout 链接的逻辑。
       </n-alert>
 
       <n-form label-placement="top" size="small">

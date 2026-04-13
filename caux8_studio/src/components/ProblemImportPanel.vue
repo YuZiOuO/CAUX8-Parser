@@ -105,8 +105,8 @@ function handleApply() {
   <n-card title="Problem Import">
     <n-space vertical size="medium">
       <n-alert type="info" :show-icon="true">
-        已迁移 Python moodle_parser 的核心能力：FPS XML / YBT JSON 可以转成 Studio
-        的通用 Problem，并同时生成 Moodle CodeRunner XML 预览。
+        已内置 FPS XML / YBT JSON 导入能力：可以转成 Studio 的通用 Problem，
+        并同时生成 Moodle CodeRunner XML 预览。
       </n-alert>
 
       <n-form label-placement="top" size="small">
