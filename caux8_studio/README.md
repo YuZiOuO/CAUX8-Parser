@@ -54,7 +54,7 @@ Moodle XML 导出链路：
 1. `ProblemEditorPanel` 编辑通用 `Problem`
 2. 在输出页选择 `Moodle XML` adapter
 3. `useStudioState` 做校验并生成 XML 预览
-4. 点击“导出 XML”后复制到剪贴板，后续可再接 Tauri 保存文件
+4. 点击“导出 XML”后通过 Tauri 保存到本地 `.xml` 文件
 
 当前约定的 Tauri command 形状：
 

@@ -26,6 +26,7 @@ import {
   RuntimeCommandError,
   type RuntimeCommandErrorInfo,
 } from "@/runtime/errors";
+import { exportXmlToFile } from "@/runtime/export";
 import type {
   Caux8CourseSection,
   Caux8SessionInfo,
@@ -104,11 +105,24 @@ async function handleExportXml() {
   }
 
   try {
-    await navigator.clipboard.writeText(xmlPreview.value);
-    message.success("Moodle XML 已复制到剪贴板");
+    const result = await exportXmlToFile({
+      xml: xmlPreview.value,
+      defaultFileName: problem.title || "problem.xml",
+    });
+
+    if (result.canceled) {
+      return;
+    }
+
+    message.success(`Moodle XML 已保存到 ${result.path}`);
   } catch (error) {
+    if (error instanceof RuntimeCommandError) {
+      message.error(error.info.message);
+      return;
+    }
+
     const detail = error instanceof Error ? error.message : String(error);
-    message.error(`复制 XML 失败: ${detail}`);
+    message.error(`导出 XML 失败: ${detail}`);
   }
 }
 </script>
