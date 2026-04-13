@@ -1,5 +1,7 @@
 import type { Problem } from "../core/problem.js";
 
+export type AdapterAction = "upload" | "export-xml";
+
 export type AdapterFieldInputType =
   | "text"
   | "textarea"
@@ -31,6 +33,7 @@ export interface QuestionAdapterDefinition {
   id: string;
   displayName: string;
   description: string;
+  action: AdapterAction;
   credentialFields: AdapterFieldSpec[];
   targetFields: AdapterFieldSpec[];
   /**
@@ -38,30 +41,4 @@ export interface QuestionAdapterDefinition {
    * Keys are dot-separated paths like `limits.timeLimitSeconds` or `testCases.*.weight`.
    */
   problemFieldOverrides?: Record<string, ProblemFieldOverride>;
-}
-
-export interface UploadContext<TTargetConfig, TCredentials> {
-  target: TTargetConfig;
-  credentials: TCredentials;
-}
-
-export interface QuestionAdapter<
-  TTargetConfig,
-  TCredentials,
-  TPlatformQuestion,
-  TResult,
-> {
-  readonly definition: QuestionAdapterDefinition;
-
-  validate(problem: Problem): string[];
-
-  toPlatformQuestion(
-    problem: Problem,
-    target: TTargetConfig,
-  ): TPlatformQuestion;
-
-  upload(
-    problem: Problem,
-    context: UploadContext<TTargetConfig, TCredentials>,
-  ): Promise<TResult>;
 }

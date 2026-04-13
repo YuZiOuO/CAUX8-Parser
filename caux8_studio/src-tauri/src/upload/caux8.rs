@@ -9,7 +9,7 @@ use url::Url;
 
 use crate::runtime_error::{truncate_detail, RuntimeCommandError};
 
-use super::{RuntimeUploadPayload, RuntimeUploadResult};
+use super::{RuntimeSubmitPayload, RuntimeSubmitResult};
 
 const CAU_BASE_URL: &str = "http://page.cau.edu.cn";
 const CREATE_QUESTION_ENDPOINT: &str = "http://page.cau.edu.cn/course/modedit.php";
@@ -99,9 +99,9 @@ struct ImportQuestionResult {
     test_case_response_status: u16,
 }
 
-pub async fn upload(
-    payload: RuntimeUploadPayload,
-) -> Result<RuntimeUploadResult, RuntimeCommandError> {
+pub async fn submit(
+    payload: RuntimeSubmitPayload,
+) -> Result<RuntimeSubmitResult, RuntimeCommandError> {
     let question: RequiredQuestion = serde_json::from_value(payload.question).map_err(|err| {
         RuntimeCommandError::new("invalid_question_payload", "题目载荷解析失败")
             .with_detail(err.to_string())
@@ -199,7 +199,7 @@ pub async fn upload(
         test_case_response_status: testcase_status,
     };
 
-    Ok(RuntimeUploadResult {
+    Ok(RuntimeSubmitResult {
         ok: true,
         message: Some(format!("上传完成，题目 ID: {}", result.question_id)),
         data: Some(serde_json::to_value(result).map_err(|err| {

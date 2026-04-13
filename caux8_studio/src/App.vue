@@ -19,6 +19,7 @@ import {
   NTag,
 } from "naive-ui";
 import Caux8SessionPanel from "@/components/Caux8SessionPanel.vue";
+import ProblemImportPanel from "@/components/ProblemImportPanel.vue";
 import ProblemEditorPanel from "@/components/ProblemEditorPanel.vue";
 import StudioSidebar from "@/components/StudioSidebar.vue";
 import {
@@ -30,6 +31,7 @@ import type {
   Caux8SessionInfo,
 } from "@/runtime/session";
 import { useStudioState } from "@/studio/use-studio-state";
+import type { Problem } from "@/x8req/core/problem.js";
 
 const {
   adapterOptions,
@@ -42,11 +44,13 @@ const {
   validationErrorMap,
   targetMissingFields,
   credentialMissingFields,
-  payloadPreview,
+  submissionPreview,
+  xmlPreview,
   uploading,
   getFieldOverride,
-  uploadCurrentProblem,
+  submitCurrentProblem,
   applyCaux8Session,
+  replaceProblem,
 } = useStudioState();
 
 const { message } = createDiscreteApi(["message"]);
@@ -56,7 +60,7 @@ const activePage = ref("upload");
 async function handleUpload() {
   try {
     uploadError.value = null;
-    const result = await uploadCurrentProblem();
+    const result = await submitCurrentProblem();
 
     if (result.ok) {
       message.success(result.message ?? "上传完成");
@@ -88,6 +92,25 @@ function handleApplySession(
   applyCaux8Session(session, moodleSession, section);
   activePage.value = "upload";
 }
+
+function handleApplyImportedProblem(problem: Problem) {
+  replaceProblem(problem);
+  activePage.value = "upload";
+}
+
+async function handleExportXml() {
+  if (!xmlPreview.value) {
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(xmlPreview.value);
+    message.success("Moodle XML 已复制到剪贴板");
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    message.error(`复制 XML 失败: ${detail}`);
+  }
+}
 </script>
 
 <template>
@@ -113,11 +136,15 @@ function handleApplySession(
       >
         <n-space vertical size="medium" style="flex: 1">
           <n-tabs v-model:value="activePage" type="line" animated>
+            <n-tab-pane name="import" tab="Problem Import">
+              <ProblemImportPanel @apply="handleApplyImportedProblem" />
+            </n-tab-pane>
+
             <n-tab-pane name="session" tab="CAUX8 Session">
               <Caux8SessionPanel @apply="handleApplySession" />
             </n-tab-pane>
 
-            <n-tab-pane name="upload" tab="Problem Upload">
+            <n-tab-pane name="upload" tab="Problem Output">
               <n-space vertical size="medium">
                 <n-form inline size="small">
                   <n-form-item label="Target Adapter">
@@ -164,11 +191,13 @@ function handleApplySession(
                       :validation-errors="validationErrors"
                       :target-missing-fields="targetMissingFields"
                       :credential-missing-fields="credentialMissingFields"
-                      :payload-preview="payloadPreview"
+                      :submission-preview="submissionPreview"
+                      :xml-preview="xmlPreview"
                       :problem="problem"
                       :uploading="uploading"
                       :upload-error="uploadError"
-                      @upload="handleUpload"
+                      @submit="handleUpload"
+                      @export-xml="handleExportXml"
                     />
                   </template>
                 </n-split>

@@ -99,6 +99,7 @@ export const caux8QuestionAdapterDefinition: QuestionAdapterDefinition = {
   id: "caux8-http",
   displayName: "CAU Moodle HTTP",
   description: "通过 CAU Moodle 表单接口直接创建题目并上传测试用例",
+  action: "upload",
   credentialFields: caux8CredentialFields,
   targetFields: caux8TargetFields,
   problemFieldOverrides: {

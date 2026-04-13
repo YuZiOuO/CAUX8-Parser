@@ -27,14 +27,16 @@ const props = defineProps<{
   validationErrors: string[];
   targetMissingFields: string[];
   credentialMissingFields: string[];
-  payloadPreview: unknown;
+  submissionPreview: unknown;
+  xmlPreview: string | null;
   problem: Problem;
   uploading: boolean;
   uploadError: RuntimeCommandErrorInfo | null;
 }>();
 
 const emit = defineEmits<{
-  upload: [];
+  submit: [];
+  exportXml: [];
 }>();
 
 function stringify(value: unknown) {
@@ -88,8 +90,18 @@ function getFieldOptions(field: {
   return (field.options ?? []) as never;
 }
 
-const canUpload = computed(
+const canSubmit = computed(
   () =>
+    props.selectedAdapter.definition.action === "upload" &&
+    props.validationErrors.length === 0 &&
+    props.targetMissingFields.length === 0 &&
+    props.credentialMissingFields.length === 0,
+);
+
+const canExportXml = computed(
+  () =>
+    props.selectedAdapter.definition.action === "export-xml" &&
+    props.xmlPreview !== null &&
     props.validationErrors.length === 0 &&
     props.targetMissingFields.length === 0 &&
     props.credentialMissingFields.length === 0,
@@ -100,21 +112,37 @@ const canUpload = computed(
   <n-layout native-scrollbar style="height: 100%; padding-left: 8px">
     <n-space vertical>
       <n-alert type="info" :show-icon="true">
-        上传默认通过 Tauri command 执行，前端只负责编辑与适配。
+        <template v-if="selectedAdapter.definition.action === 'upload'">
+          上传默认通过 Tauri command 执行，前端只负责编辑与适配。
+        </template>
+        <template v-else>
+          当前 adapter 只负责导出 Moodle XML，不会直接请求平台。
+        </template>
       </n-alert>
 
       <n-button
+        v-if="selectedAdapter.definition.action === 'upload'"
         type="primary"
         block
-        :disabled="!canUpload"
+        :disabled="!canSubmit"
         :loading="uploading"
-        @click="emit('upload')"
+        @click="emit('submit')"
       >
         一键上传
       </n-button>
 
+      <n-button
+        v-else-if="selectedAdapter.definition.action === 'export-xml'"
+        type="primary"
+        block
+        :disabled="!canExportXml"
+        @click="emit('exportXml')"
+      >
+        导出 XML
+      </n-button>
+
       <n-alert
-        v-if="uploadError"
+        v-if="uploadError && selectedAdapter.definition.action === 'upload'"
         type="error"
         title="上传失败"
         :show-icon="true"
@@ -204,20 +232,44 @@ const canUpload = computed(
             缺少凭证字段：{{ fieldLabel }}
           </n-alert>
 
-          <n-divider title-placement="left">Platform Payload</n-divider>
-          <n-code
-            :code="stringify(payloadPreview)"
-            language="json"
-            style="
-              max-height: 200px;
-              overflow: auto;
-              border: 1px solid var(--n-border-color);
-              border-radius: 4px;
-              padding: 8px;
-            "
-          />
+          <template v-if="selectedAdapter.definition.action === 'upload'">
+            <n-divider title-placement="left">Submission Preview</n-divider>
+            <n-code
+              :code="stringify(submissionPreview)"
+              language="json"
+              style="
+                max-height: 200px;
+                overflow: auto;
+                border: 1px solid var(--n-border-color);
+                border-radius: 4px;
+                padding: 8px;
+              "
+            />
+          </template>
 
-          <template v-if="uploadError">
+          <template
+            v-if="
+              selectedAdapter.definition.action === 'export-xml' &&
+              xmlPreview
+            "
+          >
+            <n-divider title-placement="left">XML Preview</n-divider>
+            <n-code
+              :code="xmlPreview"
+              language="xml"
+              style="
+                max-height: 240px;
+                overflow: auto;
+                border: 1px solid var(--n-border-color);
+                border-radius: 4px;
+                padding: 8px;
+              "
+            />
+          </template>
+
+          <template
+            v-if="uploadError && selectedAdapter.definition.action === 'upload'"
+          >
             <n-divider title-placement="left">Upload Error Details</n-divider>
             <n-code
               :code="stringifyUploadError(uploadError)"

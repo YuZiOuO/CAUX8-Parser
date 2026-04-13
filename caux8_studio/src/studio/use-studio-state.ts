@@ -1,5 +1,6 @@
 import { computed, reactive, ref, toRaw, watch } from "vue";
 import { questionAdapterCatalog } from "@/x8req/adapters/catalog.js";
+import type { Problem } from "@/x8req/core/problem.js";
 import type { ProblemFieldOverride } from "@/x8req/adapters/types.js";
 import type { DynamicFormState, PrimitiveFormValue } from "@/studio/types";
 import { createDefaultProblem } from "@/studio/default-problem";
@@ -8,8 +9,8 @@ import type {
   Caux8SessionInfo,
 } from "@/runtime/session";
 import {
-  uploadProblemViaRuntime,
-  type RuntimeUploadResult,
+  submitProblemViaRuntime,
+  type RuntimeSubmitResult,
 } from "@/runtime/upload";
 
 function resetFormState(target: DynamicFormState, next: DynamicFormState) {
@@ -117,20 +118,24 @@ export function useStudioState() {
       .map((field) => field.label),
   );
 
-  const canUpload = computed(
+  const canExecute = computed(
     () =>
       validationErrors.value.length === 0 &&
       targetMissingFields.value.length === 0 &&
       credentialMissingFields.value.length === 0,
   );
 
-  const payloadPreview = computed(() => {
-    if (!canUpload.value) {
+  const submissionPreview = computed(() => {
+    if (
+      selectedAdapter.value.definition.action !== "upload" ||
+      !selectedAdapter.value.buildSubmission ||
+      !canExecute.value
+    ) {
       return null;
     }
 
     try {
-      return selectedAdapter.value.toPlatformQuestion(
+      return selectedAdapter.value.buildSubmission(
         problem,
         targetConfig as never,
       );
@@ -141,19 +146,43 @@ export function useStudioState() {
     }
   });
 
-  async function uploadCurrentProblem(): Promise<RuntimeUploadResult> {
-    if (!canUpload.value) {
+  const xmlPreview = computed(() => {
+    if (
+      selectedAdapter.value.definition.action !== "export-xml" ||
+      !selectedAdapter.value.exportXml ||
+      !canExecute.value
+    ) {
+      return null;
+    }
+
+    try {
+      return selectedAdapter.value.exportXml(problem, targetConfig as never);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      return `<!-- XML export failed: ${detail} -->`;
+    }
+  });
+
+  async function submitCurrentProblem(): Promise<RuntimeSubmitResult> {
+    if (
+      selectedAdapter.value.definition.action !== "upload" ||
+      !selectedAdapter.value.buildSubmission
+    ) {
+      throw new Error("当前 adapter 不支持上传");
+    }
+
+    if (!canExecute.value) {
       throw new Error("请先修正校验错误、目标配置和凭证");
     }
 
-    const question = selectedAdapter.value.toPlatformQuestion(
+    const question = selectedAdapter.value.buildSubmission(
       problem,
       targetConfig as never,
     );
 
     uploading.value = true;
     try {
-      return await uploadProblemViaRuntime({
+      return await submitProblemViaRuntime({
         adapterId: selectedAdapter.value.definition.id,
         question: structuredClone(question),
         credentials: structuredClone(toRaw(credentialConfig)),
@@ -178,6 +207,14 @@ export function useStudioState() {
     }
   }
 
+  function replaceProblem(nextProblem: Problem) {
+    for (const key of Object.keys(problem)) {
+      delete problem[key as keyof Problem];
+    }
+
+    Object.assign(problem, structuredClone(nextProblem));
+  }
+
   return {
     adapterOptions,
     selectedAdapterId,
@@ -189,11 +226,13 @@ export function useStudioState() {
     validationErrorMap,
     targetMissingFields,
     credentialMissingFields,
-    payloadPreview,
+    submissionPreview,
+    xmlPreview,
     uploading,
-    canUpload,
+    canExecute,
     getFieldOverride,
-    uploadCurrentProblem,
+    submitCurrentProblem,
     applyCaux8Session,
+    replaceProblem,
   };
 }

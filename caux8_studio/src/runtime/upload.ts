@@ -7,40 +7,40 @@ import {
 } from "@/runtime/errors";
 import type { DynamicFormState } from "@/studio/types";
 
-export interface RuntimeUploadPayload {
+export interface RuntimeSubmitPayload {
   adapterId: string;
   question: unknown;
   credentials: DynamicFormState;
 }
 
-export interface RuntimeUploadResult {
+export interface RuntimeSubmitResult {
   ok: boolean;
   message?: string;
   data?: unknown;
 }
 
-export async function uploadProblemViaRuntime(
-  payload: RuntimeUploadPayload,
-): Promise<RuntimeUploadResult> {
+export async function submitProblemViaRuntime(
+  payload: RuntimeSubmitPayload,
+): Promise<RuntimeSubmitResult> {
   if (!hasTauriInvokeRuntime()) {
     throw createMissingTauriRuntimeError();
   }
 
   try {
-    return await invoke<RuntimeUploadResult>("upload_problem", {
+    return await invoke<RuntimeSubmitResult>("submit_problem", {
       payload,
     });
   } catch (error) {
-    throw normalizeUploadError(error);
+    throw normalizeSubmitError(error);
   }
 }
 
-function normalizeUploadError(error: unknown): RuntimeCommandError {
+function normalizeSubmitError(error: unknown): RuntimeCommandError {
   if (error instanceof RuntimeCommandError) {
     return error;
   }
 
-  if (isBackendUploadError(error)) {
+  if (isBackendSubmitError(error)) {
     return new RuntimeCommandError({
       code: error.code,
       message: error.message,
@@ -67,9 +67,7 @@ function normalizeUploadError(error: unknown): RuntimeCommandError {
   });
 }
 
-function isBackendUploadError(
-  value: unknown,
-): value is RuntimeCommandErrorInfo {
+function isBackendSubmitError(value: unknown): value is RuntimeCommandErrorInfo {
   return (
     typeof value === "object" &&
     value !== null &&

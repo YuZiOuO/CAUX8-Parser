@@ -1,4 +1,3 @@
-export { caux8QuestionAdapter } from "./adapter.js";
 export {
   caux8QuestionAdapterDefinition,
   createDefaultCaux8TargetConfig,

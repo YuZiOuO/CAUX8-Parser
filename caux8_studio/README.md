@@ -78,3 +78,15 @@ CAUX8 Session 页集成了旧 `auth.py` 的核心逻辑：
 - 通过 Tauri command 请求 `course/view.php`
 - 从课程页解析 `sesskey`、登录信息和 `section-*` 列表
 - 点击“应用到上传配置”后写入上传页的 `course`、`section`、`sesskey` 和 `MoodleSession`
+
+Problem Import 页迁移了 `caux8_moodle_parser` 的核心逻辑：
+
+- 粘贴 FPS XML
+- 或粘贴 YBT JSON，并可额外提供测试文件名到文件内容的 JSON 映射
+- 解析 `title`、题面、样例、测试点、时间限制和内存限制
+- 转成 Studio 内部通用 `Problem`
+- 点击“应用到题目编辑器”后复用现有 CAUX8 上传链路
+- 同时生成 Moodle CodeRunner XML 预览
+
+Python 包里的 `question/testcase/tag/text`、枚举和 XML 导出器已经迁到 `src/x8req/moodle/`。
+后续可以逐步弃用旧的 `caux8_moodle_parser` Python 包。
