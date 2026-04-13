@@ -1,4 +1,6 @@
 .idea
 .codex
+node_modules
+dist
 # for unit tests
 /tests/hello_world.xml

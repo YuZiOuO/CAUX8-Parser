@@ -1,8 +1,5 @@
-import { importQuestion } from "./upload.js";
 import type { Problem } from "../../core/problem.js";
 import type {
-  ImportCredentials,
-  ImportQuestionResult,
   NumberBoolean,
   RedirectTarget,
   RequiredQuestion,
@@ -11,7 +8,6 @@ import type {
 } from "./types.js";
 import type {
   AdapterFieldSpec,
-  QuestionAdapter,
   QuestionAdapterDefinition,
 } from "../../adapters/types.js";
 
@@ -24,7 +20,7 @@ export interface Caux8TargetConfig {
   gradeCategory?: number;
 }
 
-const credentialFields: AdapterFieldSpec[] = [
+export const caux8CredentialFields: AdapterFieldSpec[] = [
   {
     key: "moodleSession",
     label: "MoodleSession",
@@ -34,7 +30,7 @@ const credentialFields: AdapterFieldSpec[] = [
   },
 ];
 
-const targetFields: AdapterFieldSpec[] = [
+export const caux8TargetFields: AdapterFieldSpec[] = [
   {
     key: "course",
     label: "Course ID",
@@ -75,15 +71,15 @@ const targetFields: AdapterFieldSpec[] = [
   },
 ];
 
-const definition: QuestionAdapterDefinition = {
+export const caux8QuestionAdapterDefinition: QuestionAdapterDefinition = {
   id: "caux8-http",
   displayName: "CAU Moodle HTTP",
   description: "通过 CAU Moodle 表单接口直接创建题目并上传测试用例",
-  credentialFields,
-  targetFields,
+  credentialFields: caux8CredentialFields,
+  targetFields: caux8TargetFields,
 };
 
-const SUPPORTED_SUBGRADES: readonly TestCaseSubgrade[] = [
+export const SUPPORTED_SUBGRADES: readonly TestCaseSubgrade[] = [
   "0.0",
   "1.0",
   "0.9",
@@ -113,7 +109,7 @@ function omitUndefined<T extends object>(value: T): Partial<T> {
   ) as Partial<T>;
 }
 
-function validateProblem(problem: Problem): string[] {
+export function validateCaux8Problem(problem: Problem): string[] {
   const errors: string[] = [];
 
   if (problem.title.trim() === "") {
@@ -230,31 +226,10 @@ export function toCaux8Question(
   };
 }
 
-export const caux8QuestionAdapter: QuestionAdapter<
-  Caux8TargetConfig,
-  ImportCredentials,
-  RequiredQuestion,
-  ImportQuestionResult
-> = {
-  definition,
-
-  validate(problem) {
-    return validateProblem(problem);
-  },
-
-  toPlatformQuestion(problem, target) {
-    return toCaux8Question(problem, target);
-  },
-
-  async upload(problem, context) {
-    const errors = validateProblem(problem);
-    if (errors.length > 0) {
-      throw new Error(`题目数据不合法: ${errors.join("; ")}`);
-    }
-
-    return importQuestion(
-      this.toPlatformQuestion(problem, context.target),
-      context.credentials
-    );
-  },
-};
+export function createDefaultCaux8TargetConfig(): Partial<Caux8TargetConfig> {
+  return {
+    gradeCategory: 168,
+    redirectTarget: "preview",
+    mformShowAdvancedLast: 0,
+  };
+}
