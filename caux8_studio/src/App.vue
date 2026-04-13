@@ -131,7 +131,6 @@ const validationErrors = computed(() =>
 const validationErrorMap = computed(() => {
   const map: Record<string, string> = {};
   for (const err of validationErrors.value) {
-    // 简单提取可能的路径（例如："testCases[0].weight xxxx" 提取为 "testCases[0].weight"）
     const match = err.match(/^([\w\[\].]+)/);
     if (match) {
       map[match[1]] = err;
@@ -139,6 +138,23 @@ const validationErrorMap = computed(() => {
   }
   return map;
 });
+
+function getFieldOverride(path: string) {
+  const overrides = selectedAdapter.value.definition.problemFieldOverrides;
+  if (!overrides) return null;
+
+  if (overrides[path]) {
+    return overrides[path];
+  }
+
+  // Handle wildcard paths like `testCases.*.weight`
+  const wildcardPath = path.replace(/\[\d+\]/g, ".*");
+  if (overrides[wildcardPath]) {
+    return overrides[wildcardPath];
+  }
+
+  return null;
+}
 
 const targetMissingFields = computed(() =>
   selectedAdapter.value.definition.targetFields
@@ -424,7 +440,16 @@ function updateBoolean(
                                 >language</n-text
                               >
                             </template>
+                            <n-select
+                              v-if="getFieldOverride('execution.language')"
+                              v-model:value="problem.execution!.language"
+                              :options="
+                                (getFieldOverride('execution.language')
+                                  ?.options ?? []) as any
+                              "
+                            />
                             <n-input
+                              v-else
                               v-model:value="problem.execution!.language"
                             />
                           </n-form-item>
@@ -451,7 +476,17 @@ function updateBoolean(
 
                         <n-grid-item :span="24" :m-span="8">
                           <n-form-item label="Time Limit (s)">
+                            <n-select
+                              v-if="getFieldOverride('limits.timeLimitSeconds')"
+                              v-model:value="problem.limits!.timeLimitSeconds"
+                              :options="
+                                (getFieldOverride('limits.timeLimitSeconds')
+                                  ?.options ?? []) as any
+                              "
+                              style="width: 100%"
+                            />
                             <n-input-number
+                              v-else
                               v-model:value="problem.limits!.timeLimitSeconds"
                               :min="1"
                               :max="10"
@@ -636,7 +671,22 @@ function updateBoolean(
                                       >weight</n-text
                                     >
                                   </template>
+                                  <n-select
+                                    v-if="
+                                      getFieldOverride(
+                                        `testCases[${index}].weight`,
+                                      )
+                                    "
+                                    v-model:value="value.weight"
+                                    :options="
+                                      (getFieldOverride(
+                                        `testCases[${index}].weight`,
+                                      )?.options ?? []) as any
+                                    "
+                                    style="width: 100%"
+                                  />
                                   <n-input-number
+                                    v-else
                                     v-model:value="value.weight"
                                     :min="0"
                                     :max="1"

@@ -71,14 +71,6 @@ export const caux8TargetFields: AdapterFieldSpec[] = [
   },
 ];
 
-export const caux8QuestionAdapterDefinition: QuestionAdapterDefinition = {
-  id: "caux8-http",
-  displayName: "CAU Moodle HTTP",
-  description: "通过 CAU Moodle 表单接口直接创建题目并上传测试用例",
-  credentialFields: caux8CredentialFields,
-  targetFields: caux8TargetFields,
-};
-
 export const SUPPORTED_SUBGRADES: readonly TestCaseSubgrade[] = [
   "0.0",
   "1.0",
@@ -102,6 +94,39 @@ export const SUPPORTED_SUBGRADES: readonly TestCaseSubgrade[] = [
   "0.1",
   "0.05",
 ];
+
+export const caux8QuestionAdapterDefinition: QuestionAdapterDefinition = {
+  id: "caux8-http",
+  displayName: "CAU Moodle HTTP",
+  description: "通过 CAU Moodle 表单接口直接创建题目并上传测试用例",
+  credentialFields: caux8CredentialFields,
+  targetFields: caux8TargetFields,
+  problemFieldOverrides: {
+    "execution.language": {
+      component: "select",
+      options: [
+        { label: "C (gcc)", value: "1111_ideone" },
+        { label: "C++ (g++)", value: "11_ideone" },
+        { label: "Java", value: "10_ideone" },
+        { label: "Python3", value: "116_ideone" },
+      ],
+    },
+    "limits.timeLimitSeconds": {
+      component: "select",
+      options: Array.from({ length: 10 }, (_, i) => ({
+        label: `${i + 1} s`,
+        value: i + 1,
+      })),
+    },
+    "testCases.*.weight": {
+      component: "select",
+      options: SUPPORTED_SUBGRADES.map((val) => ({
+        label: val === "0.0" ? "0%" : `${(Number(val) * 100).toFixed(1)}%`,
+        value: Number(val),
+      })),
+    },
+  },
+};
 
 function omitUndefined<T extends object>(value: T): Partial<T> {
   return Object.fromEntries(

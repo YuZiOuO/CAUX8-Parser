@@ -22,12 +22,22 @@ export interface AdapterFieldSpec {
   options?: AdapterFieldOption[];
 }
 
+export interface ProblemFieldOverride {
+  component: "select";
+  options: AdapterFieldOption[];
+}
+
 export interface QuestionAdapterDefinition {
   id: string;
   displayName: string;
   description: string;
   credentialFields: AdapterFieldSpec[];
   targetFields: AdapterFieldSpec[];
+  /**
+   * Defines overrides for the universal Problem model fields for this specific adapter.
+   * Keys are dot-separated paths like `limits.timeLimitSeconds` or `testCases.*.weight`.
+   */
+  problemFieldOverrides?: Record<string, ProblemFieldOverride>;
 }
 
 export interface UploadContext<TTargetConfig, TCredentials> {
