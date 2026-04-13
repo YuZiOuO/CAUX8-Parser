@@ -21,7 +21,10 @@ import {
   NPageHeader,
   NSelect,
   NSpace,
+  NSplit,
   NSwitch,
+  NTabs,
+  NTabPane,
   NTag,
   NText,
 } from "naive-ui";
@@ -41,7 +44,7 @@ const selectedAdapterId = ref(adapterOptions[0]?.value ?? "");
 const selectedAdapter = computed(() => {
   return (
     questionAdapterCatalog.find(
-      (entry) => entry.definition.id === selectedAdapterId.value
+      (entry) => entry.definition.id === selectedAdapterId.value,
     ) ?? questionAdapterCatalog[0]
   );
 });
@@ -106,10 +109,10 @@ function initializeDynamicState() {
     adapter.definition.targetFields.map((field) => [
       field.key,
       (field.defaultValue ?? null) as PrimitiveFormValue,
-    ])
+    ]),
   );
   const nextCredentials = Object.fromEntries(
-    adapter.definition.credentialFields.map((field) => [field.key, null])
+    adapter.definition.credentialFields.map((field) => [field.key, null]),
   );
 
   resetFormState(targetConfig, nextTarget);
@@ -118,7 +121,9 @@ function initializeDynamicState() {
 
 watch(selectedAdapterId, initializeDynamicState, { immediate: true });
 
-const validationErrors = computed(() => selectedAdapter.value.validate(problem));
+const validationErrors = computed(() =>
+  selectedAdapter.value.validate(problem),
+);
 
 const targetMissingFields = computed(() =>
   selectedAdapter.value.definition.targetFields
@@ -127,18 +132,21 @@ const targetMissingFields = computed(() =>
       const value = targetConfig[field.key];
       return value === null || value === "";
     })
-    .map((field) => field.label)
+    .map((field) => field.label),
 );
 
 const payloadPreview = computed(() => {
-  if (validationErrors.value.length > 0 || targetMissingFields.value.length > 0) {
+  if (
+    validationErrors.value.length > 0 ||
+    targetMissingFields.value.length > 0
+  ) {
     return null;
   }
 
   try {
     return selectedAdapter.value.toPlatformQuestion(
       problem,
-      targetConfig as never
+      targetConfig as never,
     );
   } catch (error) {
     return {
@@ -201,19 +209,21 @@ function getNumberValue(state: DynamicFormState, key: string): number | null {
 function setFieldValue(
   state: DynamicFormState,
   key: string,
-  value: PrimitiveFormValue
+  value: PrimitiveFormValue,
 ) {
   state[key] = value;
 }
 
-function getFieldOptions(field: { options?: { label: string; value: string | number }[] }) {
+function getFieldOptions(field: {
+  options?: { label: string; value: string | number }[];
+}) {
   return (field.options ?? []) as never;
 }
 
 function updateBoolean(
   section: "compileOnly" | "isExample" | "stopOnFailure",
   checked: boolean,
-  index?: number
+  index?: number,
 ) {
   if (section === "compileOnly") {
     problem.execution ??= {};
@@ -244,8 +254,11 @@ function updateBoolean(
   <n-config-provider>
     <n-global-style />
     <n-layout embedded style="min-height: 100vh">
-      <n-layout-header bordered>
-        <n-page-header title="CAUX8 Studio" subtitle="Problem Adapter Prototype">
+      <n-layout-header bordered style="padding: 16px">
+        <n-page-header
+          title="CAUX8 Studio"
+          subtitle="Problem Adapter Prototype"
+        >
           <template #extra>
             <n-space>
               <n-tag type="info" size="small">Naive UI Only</n-tag>
@@ -255,356 +268,387 @@ function updateBoolean(
         </n-page-header>
       </n-layout-header>
 
-      <n-layout-content content-style="padding: 24px;">
-        <n-space vertical size="large">
-          <n-card>
-            <n-grid :cols="24" :x-gap="16" :y-gap="16" responsive="screen">
-              <n-grid-item :span="24">
-                <n-form label-placement="top">
-                  <n-form-item label="Target Adapter">
-                    <n-select
-                      v-model:value="selectedAdapterId"
-                      :options="adapterOptions"
-                    />
-                  </n-form-item>
-                </n-form>
-              </n-grid-item>
+      <n-layout-content
+        content-style="padding: 16px; height: calc(100vh - 73px); display: flex; flex-direction: column;"
+      >
+        <n-space vertical size="medium" style="flex: 1">
+          <n-form inline size="small">
+            <n-form-item label="Target Adapter">
+              <n-select
+                v-model:value="selectedAdapterId"
+                :options="adapterOptions"
+                style="width: 300px"
+              />
+            </n-form-item>
+            <n-alert
+              v-if="selectedAdapter"
+              type="info"
+              :show-icon="true"
+              style="margin-left: 16px"
+            >
+              {{ selectedAdapter.definition.description }}
+            </n-alert>
+          </n-form>
 
-              <n-grid-item :span="24">
-                <n-alert type="info" :show-icon="false">
-                  {{ selectedAdapter.definition.description }}
-                </n-alert>
-              </n-grid-item>
-            </n-grid>
-          </n-card>
+          <n-split
+            direction="horizontal"
+            style="flex: 1"
+            :default-size="0.6"
+            :min="0.3"
+            :max="0.8"
+          >
+            <template #1>
+              <n-layout
+                native-scrollbar
+                style="height: 100%; padding-right: 8px"
+              >
+                <n-tabs type="line" size="small" animated>
+                  <n-tab-pane name="problem" tab="Problem Basics">
+                    <n-form label-placement="top" size="small">
+                      <n-grid :cols="24" :x-gap="16">
+                        <n-grid-item :span="24" :m-span="12">
+                          <n-form-item label="Title">
+                            <n-input v-model:value="problem.title" />
+                          </n-form-item>
+                        </n-grid-item>
+                        <n-grid-item :span="24" :m-span="12">
+                          <n-form-item label="External ID">
+                            <n-input
+                              v-model:value="problem.metadata!.externalId"
+                            />
+                          </n-form-item>
+                        </n-grid-item>
 
-          <n-grid :cols="24" :x-gap="16" :y-gap="16" responsive="screen">
-            <n-grid-item :span="24" :m-span="24" :l-span="14">
-              <n-space vertical size="large">
-                <n-card title="Problem">
-                  <n-form label-placement="top">
-                    <n-grid :cols="24" :x-gap="16">
-                      <n-grid-item :span="24" :m-span="12">
-                        <n-form-item label="Title">
-                          <n-input v-model:value="problem.title" />
-                        </n-form-item>
-                      </n-grid-item>
+                        <n-grid-item :span="24">
+                          <n-form-item label="Statement">
+                            <n-input
+                              v-model:value="problem.statement.text"
+                              type="textarea"
+                              :autosize="{ minRows: 4, maxRows: 8 }"
+                            />
+                          </n-form-item>
+                        </n-grid-item>
 
-                      <n-grid-item :span="24" :m-span="12">
-                        <n-form-item label="External ID">
-                          <n-input v-model:value="problem.metadata!.externalId" />
-                        </n-form-item>
-                      </n-grid-item>
+                        <n-grid-item :span="24">
+                          <n-form-item label="General Feedback">
+                            <n-input
+                              v-model:value="problem.generalFeedback!.text"
+                              type="textarea"
+                              :autosize="{ minRows: 2, maxRows: 4 }"
+                            />
+                          </n-form-item>
+                        </n-grid-item>
 
-                      <n-grid-item :span="24">
-                        <n-form-item label="Statement">
-                          <n-input
-                            v-model:value="problem.statement.text"
-                            type="textarea"
-                            :autosize="{ minRows: 6, maxRows: 12 }"
-                          />
-                        </n-form-item>
-                      </n-grid-item>
+                        <n-grid-item :span="24" :m-span="24">
+                          <n-form-item label="Tags">
+                            <n-input
+                              :value="(problem.metadata?.tags ?? []).join(', ')"
+                              @update:value="
+                                problem.metadata!.tags = $event
+                                  .split(',')
+                                  .map((item) => item.trim())
+                                  .filter(Boolean)
+                              "
+                            />
+                          </n-form-item>
+                        </n-grid-item>
+                      </n-grid>
+                    </n-form>
+                  </n-tab-pane>
 
-                      <n-grid-item :span="24">
-                        <n-form-item label="General Feedback">
-                          <n-input
-                            v-model:value="problem.generalFeedback!.text"
-                            type="textarea"
-                            :autosize="{ minRows: 3, maxRows: 8 }"
-                          />
-                        </n-form-item>
-                      </n-grid-item>
-                    </n-grid>
-                  </n-form>
-                </n-card>
+                  <n-tab-pane name="execution" tab="Execution & Grading">
+                    <n-form label-placement="top" size="small">
+                      <n-grid :cols="24" :x-gap="16">
+                        <n-grid-item :span="24" :m-span="12">
+                          <n-form-item label="Language">
+                            <n-input
+                              v-model:value="problem.execution!.language"
+                            />
+                          </n-form-item>
+                        </n-grid-item>
 
-                <n-card title="Execution & Grading">
-                  <n-form label-placement="top">
-                    <n-grid :cols="24" :x-gap="16">
-                      <n-grid-item :span="24" :m-span="12">
-                        <n-form-item label="Language">
-                          <n-input v-model:value="problem.execution!.language" />
-                        </n-form-item>
-                      </n-grid-item>
+                        <n-grid-item :span="24" :m-span="12">
+                          <n-form-item label="Compile Only">
+                            <n-switch
+                              :value="problem.execution?.compileOnly ?? false"
+                              @update:value="
+                                updateBoolean('compileOnly', $event)
+                              "
+                            />
+                          </n-form-item>
+                        </n-grid-item>
 
-                      <n-grid-item :span="24" :m-span="12">
-                        <n-form-item label="Compile Only">
-                          <n-switch
-                            :value="problem.execution?.compileOnly ?? false"
-                            @update:value="updateBoolean('compileOnly', $event)"
-                          />
-                        </n-form-item>
-                      </n-grid-item>
+                        <n-grid-item :span="24" :m-span="8">
+                          <n-form-item label="Time Limit (s)">
+                            <n-input-number
+                              v-model:value="problem.limits!.timeLimitSeconds"
+                              :min="1"
+                              :max="10"
+                              style="width: 100%"
+                            />
+                          </n-form-item>
+                        </n-grid-item>
 
-                      <n-grid-item :span="24" :m-span="8">
-                        <n-form-item label="Time Limit (s)">
-                          <n-input-number
-                            v-model:value="problem.limits!.timeLimitSeconds"
-                            :min="1"
-                            :max="10"
-                            style="width: 100%"
-                          />
-                        </n-form-item>
-                      </n-grid-item>
+                        <n-grid-item :span="24" :m-span="8">
+                          <n-form-item label="Memory Limit (B)">
+                            <n-input-number
+                              v-model:value="problem.limits!.memoryLimitBytes"
+                              :min="0"
+                              style="width: 100%"
+                            />
+                          </n-form-item>
+                        </n-grid-item>
 
-                      <n-grid-item :span="24" :m-span="8">
-                        <n-form-item label="Memory Limit (bytes)">
-                          <n-input-number
-                            v-model:value="problem.limits!.memoryLimitBytes"
-                            :min="0"
-                            style="width: 100%"
-                          />
-                        </n-form-item>
-                      </n-grid-item>
+                        <n-grid-item :span="24" :m-span="8">
+                          <n-form-item label="Total Grade">
+                            <n-input-number
+                              v-model:value="problem.grading!.totalGrade"
+                              :min="0"
+                              style="width: 100%"
+                            />
+                          </n-form-item>
+                        </n-grid-item>
 
-                      <n-grid-item :span="24" :m-span="8">
-                        <n-form-item label="Total Grade">
-                          <n-input-number
-                            v-model:value="problem.grading!.totalGrade"
-                            :min="0"
-                            style="width: 100%"
-                          />
-                        </n-form-item>
-                      </n-grid-item>
+                        <n-grid-item :span="24" :m-span="12">
+                          <n-form-item label="Presentation Error Ratio">
+                            <n-input-number
+                              v-model:value="
+                                problem.grading!.presentationErrorRatio
+                              "
+                              :min="0"
+                              :max="1"
+                              :step="0.1"
+                              style="width: 100%"
+                            />
+                          </n-form-item>
+                        </n-grid-item>
+                      </n-grid>
+                    </n-form>
+                  </n-tab-pane>
 
-                      <n-grid-item :span="24" :m-span="12">
-                        <n-form-item label="Presentation Error Ratio">
-                          <n-input-number
-                            v-model:value="problem.grading!.presentationErrorRatio"
-                            :min="0"
-                            :max="1"
-                            :step="0.1"
-                            style="width: 100%"
-                          />
-                        </n-form-item>
-                      </n-grid-item>
-
-                      <n-grid-item :span="24" :m-span="12">
-                        <n-form-item label="Tags">
-                          <n-input
-                            :value="(problem.metadata?.tags ?? []).join(', ')"
-                            @update:value="
-                              problem.metadata!.tags = $event
-                                .split(',')
-                                .map((item) => item.trim())
-                                .filter(Boolean)
-                            "
-                          />
-                        </n-form-item>
-                      </n-grid-item>
-                    </n-grid>
-                  </n-form>
-                </n-card>
-
-                <n-card title="Test Cases">
-                  <n-dynamic-input
-                    v-model:value="problem.testCases"
-                    :on-create="createTestCase"
-                    show-sort-button
-                  >
-                    <template #default="{ value, index }">
-                      <n-card :title="`Case ${index + 1}`" size="small">
-                        <n-form label-placement="top">
-                          <n-grid :cols="24" :x-gap="16">
-                            <n-grid-item :span="24" :m-span="12">
-                              <n-form-item label="Input">
-                                <n-input
-                                  v-model:value="value.input"
-                                  type="textarea"
-                                  :autosize="{ minRows: 3, maxRows: 6 }"
-                                />
-                              </n-form-item>
-                            </n-grid-item>
-
-                            <n-grid-item :span="24" :m-span="12">
-                              <n-form-item label="Output">
-                                <n-input
-                                  v-model:value="value.output"
-                                  type="textarea"
-                                  :autosize="{ minRows: 3, maxRows: 6 }"
-                                />
-                              </n-form-item>
-                            </n-grid-item>
-
-                            <n-grid-item :span="24">
-                              <n-form-item label="Feedback">
-                                <n-input v-model:value="value.feedback" />
-                              </n-form-item>
-                            </n-grid-item>
-
-                            <n-grid-item :span="24" :m-span="6">
-                              <n-form-item label="Weight">
-                                <n-input-number
-                                  v-model:value="value.weight"
-                                  :min="0"
-                                  :max="1"
-                                  :step="0.05"
-                                  style="width: 100%"
-                                />
-                              </n-form-item>
-                            </n-grid-item>
-
-                            <n-grid-item :span="24" :m-span="6">
-                              <n-form-item label="Kind">
-                                <n-select
-                                  v-model:value="value.kind"
-                                  :options="testcaseKindOptions"
-                                />
-                              </n-form-item>
-                            </n-grid-item>
-
-                            <n-grid-item :span="24" :m-span="6">
-                              <n-form-item label="Visibility">
-                                <n-select
-                                  v-model:value="value.visibility"
-                                  :options="testcaseVisibilityOptions"
-                                />
-                              </n-form-item>
-                            </n-grid-item>
-
-                            <n-grid-item :span="12" :m-span="3">
-                              <n-form-item label="Example">
-                                <n-switch
-                                  :value="value.isExample ?? false"
-                                  @update:value="
-                                    updateBoolean('isExample', $event, index)
-                                  "
-                                />
-                              </n-form-item>
-                            </n-grid-item>
-
-                            <n-grid-item :span="12" :m-span="3">
-                              <n-form-item label="Stop On Failure">
-                                <n-switch
-                                  :value="value.stopOnFailure ?? false"
-                                  @update:value="
-                                    updateBoolean('stopOnFailure', $event, index)
-                                  "
-                                />
-                              </n-form-item>
-                            </n-grid-item>
-                          </n-grid>
-                        </n-form>
-                      </n-card>
-                    </template>
-                  </n-dynamic-input>
-                </n-card>
-              </n-space>
-            </n-grid-item>
-
-            <n-grid-item :span="24" :m-span="24" :l-span="10">
-              <n-space vertical size="large">
-                <n-card title="Target Config">
-                  <n-form label-placement="top">
-                    <n-form-item
-                      v-for="field in selectedAdapter.definition.targetFields"
-                      :key="field.key"
-                      :label="field.label"
+                  <n-tab-pane name="testcases" tab="Test Cases">
+                    <n-dynamic-input
+                      v-model:value="problem.testCases"
+                      :on-create="createTestCase"
+                      show-sort-button
                     >
-                      <n-select
-                        v-if="field.input === 'select'"
-                        :value="targetConfig[field.key]"
-                        :options="getFieldOptions(field)"
-                        @update:value="setFieldValue(targetConfig, field.key, $event)"
+                      <template #default="{ value, index }">
+                        <n-card
+                          :title="`Case ${index + 1}`"
+                          size="small"
+                          style="margin-bottom: 8px"
+                        >
+                          <n-form label-placement="top" size="small">
+                            <n-grid :cols="24" :x-gap="16">
+                              <n-grid-item :span="24" :m-span="12">
+                                <n-form-item label="Input">
+                                  <n-input
+                                    v-model:value="value.input"
+                                    type="textarea"
+                                    :autosize="{ minRows: 2, maxRows: 6 }"
+                                  />
+                                </n-form-item>
+                              </n-grid-item>
+                              <n-grid-item :span="24" :m-span="12">
+                                <n-form-item label="Output">
+                                  <n-input
+                                    v-model:value="value.output"
+                                    type="textarea"
+                                    :autosize="{ minRows: 2, maxRows: 6 }"
+                                  />
+                                </n-form-item>
+                              </n-grid-item>
+                              <n-grid-item :span="24">
+                                <n-form-item label="Feedback">
+                                  <n-input v-model:value="value.feedback" />
+                                </n-form-item>
+                              </n-grid-item>
+                              <n-grid-item :span="24" :m-span="6">
+                                <n-form-item label="Weight">
+                                  <n-input-number
+                                    v-model:value="value.weight"
+                                    :min="0"
+                                    :max="1"
+                                    :step="0.05"
+                                    style="width: 100%"
+                                  />
+                                </n-form-item>
+                              </n-grid-item>
+                              <n-grid-item :span="24" :m-span="6">
+                                <n-form-item label="Kind">
+                                  <n-select
+                                    v-model:value="value.kind"
+                                    :options="testcaseKindOptions"
+                                  />
+                                </n-form-item>
+                              </n-grid-item>
+                              <n-grid-item :span="24" :m-span="6">
+                                <n-form-item label="Visibility">
+                                  <n-select
+                                    v-model:value="value.visibility"
+                                    :options="testcaseVisibilityOptions"
+                                  />
+                                </n-form-item>
+                              </n-grid-item>
+
+                              <n-grid-item :span="24" :m-span="6">
+                                <n-space align="center" style="height: 100%">
+                                  <n-switch
+                                    :value="value.isExample ?? false"
+                                    @update:value="
+                                      updateBoolean('isExample', $event, index)
+                                    "
+                                  >
+                                    <template #checked>Example</template>
+                                    <template #unchecked>Example</template>
+                                  </n-switch>
+                                  <n-switch
+                                    :value="value.stopOnFailure ?? false"
+                                    @update:value="
+                                      updateBoolean(
+                                        'stopOnFailure',
+                                        $event,
+                                        index,
+                                      )
+                                    "
+                                  >
+                                    <template #checked>Stop Fail</template>
+                                    <template #unchecked>Stop Fail</template>
+                                  </n-switch>
+                                </n-space>
+                              </n-grid-item>
+                            </n-grid>
+                          </n-form>
+                        </n-card>
+                      </template>
+                    </n-dynamic-input>
+                  </n-tab-pane>
+                </n-tabs>
+              </n-layout>
+            </template>
+            <template #2>
+              <n-layout
+                native-scrollbar
+                style="height: 100%; padding-left: 8px"
+              >
+                <n-tabs type="line" size="small" animated>
+                  <n-tab-pane name="config" tab="Target Config">
+                    <n-form label-placement="top" size="small">
+                      <n-divider title-placement="left"
+                        >Adapter Settings</n-divider
+                      >
+                      <n-form-item
+                        v-for="field in selectedAdapter.definition.targetFields"
+                        :key="field.key"
+                        :label="field.label"
+                      >
+                        <n-select
+                          v-if="field.input === 'select'"
+                          :value="targetConfig[field.key]"
+                          :options="getFieldOptions(field)"
+                          @update:value="
+                            setFieldValue(targetConfig, field.key, $event)
+                          "
+                        />
+                        <n-input-number
+                          v-else-if="field.input === 'number'"
+                          :value="getNumberValue(targetConfig, field.key)"
+                          style="width: 100%"
+                          @update:value="
+                            setFieldValue(targetConfig, field.key, $event)
+                          "
+                        />
+                        <n-input
+                          v-else
+                          :value="getTextValue(targetConfig, field.key)"
+                          :type="
+                            field.input === 'password' ? 'password' : 'text'
+                          "
+                          @update:value="
+                            setFieldValue(targetConfig, field.key, $event)
+                          "
+                        />
+                      </n-form-item>
+
+                      <n-divider title-placement="left">Credentials</n-divider>
+                      <n-form-item
+                        v-for="field in selectedAdapter.definition
+                          .credentialFields"
+                        :key="field.key"
+                        :label="field.label"
+                      >
+                        <n-input
+                          :value="getTextValue(credentialConfig, field.key)"
+                          :type="
+                            field.input === 'password' ? 'password' : 'text'
+                          "
+                          @update:value="
+                            setFieldValue(credentialConfig, field.key, $event)
+                          "
+                        />
+                      </n-form-item>
+                    </n-form>
+                  </n-tab-pane>
+
+                  <n-tab-pane name="validation" tab="Validation & Preview">
+                    <n-space vertical>
+                      <n-alert
+                        v-if="validationErrors.length === 0"
+                        type="success"
+                        :show-icon="true"
+                      >
+                        通用题目字段校验通过
+                      </n-alert>
+                      <n-alert
+                        v-for="error in validationErrors"
+                        :key="error"
+                        type="error"
+                        :show-icon="true"
+                      >
+                        {{ error }}
+                      </n-alert>
+                      <n-alert
+                        v-for="fieldLabel in targetMissingFields"
+                        :key="fieldLabel"
+                        type="warning"
+                        :show-icon="true"
+                      >
+                        缺少目标平台字段：{{ fieldLabel }}
+                      </n-alert>
+
+                      <n-divider title-placement="left"
+                        >Platform Payload</n-divider
+                      >
+                      <n-code
+                        :code="stringify(payloadPreview)"
+                        language="json"
+                        style="
+                          max-height: 200px;
+                          overflow: auto;
+                          border: 1px solid var(--n-border-color);
+                          border-radius: 4px;
+                          padding: 8px;
+                        "
                       />
-                      <n-input-number
-                        v-else-if="field.input === 'number'"
-                        :value="getNumberValue(targetConfig, field.key)"
-                        style="width: 100%"
-                        @update:value="setFieldValue(targetConfig, field.key, $event)"
+
+                      <n-divider title-placement="left">Raw Problem</n-divider>
+                      <n-code
+                        :code="stringify(problem)"
+                        language="json"
+                        style="
+                          max-height: 200px;
+                          overflow: auto;
+                          border: 1px solid var(--n-border-color);
+                          border-radius: 4px;
+                          padding: 8px;
+                        "
                       />
-                      <n-input
-                        v-else
-                        :value="getTextValue(targetConfig, field.key)"
-                        :type="field.input === 'password' ? 'password' : 'text'"
-                        @update:value="setFieldValue(targetConfig, field.key, $event)"
-                      />
-                    </n-form-item>
-                  </n-form>
-                </n-card>
-
-                <n-card title="Credentials">
-                  <n-form label-placement="top">
-                    <n-form-item
-                      v-for="field in selectedAdapter.definition.credentialFields"
-                      :key="field.key"
-                      :label="field.label"
-                    >
-                      <n-input
-                        :value="getTextValue(credentialConfig, field.key)"
-                        :type="field.input === 'password' ? 'password' : 'text'"
-                        @update:value="setFieldValue(credentialConfig, field.key, $event)"
-                      />
-                    </n-form-item>
-                  </n-form>
-                </n-card>
-
-                <n-card title="Validation">
-                  <n-space vertical>
-                    <n-alert
-                      v-if="validationErrors.length === 0"
-                      type="success"
-                      :show-icon="false"
-                    >
-                      通用题目字段校验通过
-                    </n-alert>
-
-                    <n-alert
-                      v-for="error in validationErrors"
-                      :key="error"
-                      type="error"
-                      :show-icon="false"
-                    >
-                      {{ error }}
-                    </n-alert>
-
-                    <n-alert
-                      v-for="fieldLabel in targetMissingFields"
-                      :key="fieldLabel"
-                      type="warning"
-                      :show-icon="false"
-                    >
-                      缺少目标平台字段：{{ fieldLabel }}
-                    </n-alert>
-                  </n-space>
-                </n-card>
-
-                <n-card title="Preview">
-                  <n-space vertical>
-                    <div>
-                      <n-text depth="3">Platform Payload</n-text>
-                      <n-divider style="margin-top: 8px; margin-bottom: 12px" />
-                      <n-code :code="stringify(payloadPreview)" language="json" />
-                    </div>
-
-                    <div>
-                      <n-text depth="3">Raw Problem</n-text>
-                      <n-divider style="margin-top: 8px; margin-bottom: 12px" />
-                      <n-code :code="stringify(problem)" language="json" />
-                    </div>
-
-                    <div>
-                      <n-text depth="3">Credentials Draft</n-text>
-                      <n-divider style="margin-top: 8px; margin-bottom: 12px" />
-                      <n-code :code="stringify(credentialConfig)" language="json" />
-                    </div>
-                  </n-space>
-                </n-card>
-
-                <n-card title="Next Step">
-                  <n-space vertical>
-                    <n-text depth="3">
-                      当前页面只做 adapter 适配验证和 payload 预览。
-                    </n-text>
-                    <n-button type="primary" secondary disabled>
-                      Upload via Tauri Command
-                    </n-button>
-                  </n-space>
-                </n-card>
-              </n-space>
-            </n-grid-item>
-          </n-grid>
+                    </n-space>
+                  </n-tab-pane>
+                </n-tabs>
+              </n-layout>
+            </template>
+          </n-split>
         </n-space>
       </n-layout-content>
     </n-layout>

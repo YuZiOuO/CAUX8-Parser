@@ -8,7 +8,9 @@ import {
 } from "./defaults.js";
 import type { RequiredQuestion } from "../types.js";
 
-export function constructQuestionRequestBody(question: RequiredQuestion): FormData {
+export function constructQuestionRequestBody(
+  question: RequiredQuestion,
+): FormData {
   const form = new FormData();
 
   appendBasicInfo(question.basicInfo, form);

@@ -15,14 +15,14 @@ import type {
  */
 export async function importQuestion(
   q: RequiredQuestion,
-  credentials: ImportCredentials
+  credentials: ImportCredentials,
 ): Promise<ImportQuestionResult> {
   const cli = createHttpClient(credentials.moodleSession);
 
   // 创建题目
   const res = await cli.post(
     ENDPOINTS.createQuestion,
-    constructQuestionRequestBody(q)
+    constructQuestionRequestBody(q),
   );
 
   // 获取题目ID
@@ -42,7 +42,7 @@ export async function importQuestion(
   // 创建测试用例
   const res2 = await cli.post(
     ENDPOINTS.createTestCase,
-    constructTestCaseRequestBody(q.basicInfo.sesskey, questionId, q.testCases)
+    constructTestCaseRequestBody(q.basicInfo.sesskey, questionId, q.testCases),
   );
 
   return {

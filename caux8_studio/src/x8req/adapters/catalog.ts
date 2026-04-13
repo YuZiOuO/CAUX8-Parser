@@ -14,7 +14,7 @@ export interface QuestionAdapterCatalogEntry<TTargetConfig, TPlatformQuestion> {
   validate(problem: Problem): string[];
   toPlatformQuestion(
     problem: Problem,
-    target: TTargetConfig
+    target: TTargetConfig,
   ): TPlatformQuestion;
 }
 

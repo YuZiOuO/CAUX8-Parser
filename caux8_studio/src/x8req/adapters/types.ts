@@ -47,11 +47,11 @@ export interface QuestionAdapter<
 
   toPlatformQuestion(
     problem: Problem,
-    target: TTargetConfig
+    target: TTargetConfig,
   ): TPlatformQuestion;
 
   upload(
     problem: Problem,
-    context: UploadContext<TTargetConfig, TCredentials>
+    context: UploadContext<TTargetConfig, TCredentials>,
   ): Promise<TResult>;
 }

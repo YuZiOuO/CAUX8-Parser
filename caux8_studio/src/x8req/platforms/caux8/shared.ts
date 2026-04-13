@@ -105,7 +105,7 @@ export const SUPPORTED_SUBGRADES: readonly TestCaseSubgrade[] = [
 
 function omitUndefined<T extends object>(value: T): Partial<T> {
   return Object.fromEntries(
-    Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined)
+    Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined),
   ) as Partial<T>;
 }
 
@@ -133,7 +133,8 @@ export function validateCaux8Problem(problem: Problem): string[] {
 
   if (
     problem.limits?.timeLimitSeconds !== undefined &&
-    (problem.limits.timeLimitSeconds < 1 || problem.limits.timeLimitSeconds > 10)
+    (problem.limits.timeLimitSeconds < 1 ||
+      problem.limits.timeLimitSeconds > 10)
   ) {
     errors.push("CAUX8 平台当前只支持 1-10 秒的 timeLimitSeconds");
   }
@@ -183,7 +184,7 @@ function toCaux8TestCase(problem: Problem): TestCase[] {
 
 export function toCaux8Question(
   problem: Problem,
-  target: Caux8TargetConfig
+  target: Caux8TargetConfig,
 ): RequiredQuestion {
   return {
     basicInfo: {

@@ -36,7 +36,7 @@ export const caux8QuestionAdapter: QuestionAdapter<
 
     return importQuestion(
       this.toPlatformQuestion(problem, context.target),
-      context.credentials
+      context.credentials,
     );
   },
 };

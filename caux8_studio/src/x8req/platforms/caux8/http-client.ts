@@ -15,7 +15,7 @@ export function createHttpClient(moodleSession: string) {
       httpOnly: true,
       secure: false,
     }),
-    `${CAU_BASE_URL}/`
+    `${CAU_BASE_URL}/`,
   );
 
   return wrapper(
@@ -24,6 +24,6 @@ export function createHttpClient(moodleSession: string) {
       jar,
       maxRedirects: 0,
       validateStatus: (status) => status >= 200 && status < 400,
-    })
+    }),
   );
 }

@@ -18,7 +18,7 @@ import type {
 
 export function appendBasicInfo(
   info: RequiredBasicInfo,
-  form: FormData
+  form: FormData,
 ): FormData {
   const hiddenInfo: BasicInfo = {
     assignmenttype: "onlinejudge",
@@ -57,7 +57,7 @@ export function appendDescription(text: string, form: FormData): FormData {
 
 export function appendOJSettings(
   form: FormData,
-  override?: Partial<OnlineJudgeSettings>
+  override?: Partial<OnlineJudgeSettings>,
 ): FormData {
   return appendFields(form, {
     ...DEFAULT_ONLINE_JUDGE_SETTINGS,
@@ -67,7 +67,7 @@ export function appendOJSettings(
 
 export function appendRedirectSettings(
   form: FormData,
-  target: RedirectTarget = DEFAULT_REDIRECT_TARGET
+  target: RedirectTarget = DEFAULT_REDIRECT_TARGET,
 ): FormData {
   if (target === "none") {
     return form;
@@ -79,7 +79,7 @@ export function appendRedirectSettings(
 
 export function appendSubmissionSettings(
   form: FormData,
-  override?: Partial<SubmissionSettings>
+  override?: Partial<SubmissionSettings>,
 ): FormData {
   return appendFields(form, {
     ...DEFAULT_SUBMISSION_SETTINGS,
@@ -89,7 +89,7 @@ export function appendSubmissionSettings(
 
 export function appendGradeSettings(
   form: FormData,
-  override?: Partial<GradeSettings>
+  override?: Partial<GradeSettings>,
 ): FormData {
   return appendFields(form, {
     ...DEFAULT_GRADE_SETTINGS,

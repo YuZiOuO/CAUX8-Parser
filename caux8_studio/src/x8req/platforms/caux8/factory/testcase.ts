@@ -4,7 +4,7 @@ import type { TestCase, TestCaseRequestBody } from "../types.js";
 export function constructTestCaseRequestBody(
   sesskey: string,
   questionId: number,
-  testCases: TestCase[]
+  testCases: TestCase[],
 ): FormData {
   const t: TestCaseRequestBody = {
     sesskey,
