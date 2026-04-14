@@ -9,7 +9,7 @@ export interface MoodleXmlTargetConfig {}
 export const moodleXmlQuestionAdapterDefinition = {
   id: "moodle-xml",
   displayName: "Moodle XML",
-  description: "导出 Moodle CodeRunner XML，用于后续导入平台，不直接发起上传请求",
+  description: "导出 Moodle CodeRunner XML，供后续手动导入平台，不直接发起上传请求",
   action: "export-xml" as const,
   credentialFields: [],
   targetFields: [],

@@ -124,11 +124,10 @@ function handleApply() {
 </script>
 
 <template>
-  <n-card title="CAUX8 Session Resolver">
+  <n-card title="CAUX8 会话解析">
     <n-space vertical size="medium">
       <n-alert type="info" :show-icon="true">
         输入浏览器里的 MoodleSession 和课程 ID，解析 sesskey 与课程 section 列表。
-        这对应当前桌面端读取课程页并解析 logout 链接的逻辑。
       </n-alert>
 
       <n-form label-placement="top" size="small">
@@ -137,11 +136,11 @@ function handleApply() {
             v-model:value="form.moodleSession"
             type="password"
             show-password-on="click"
-            placeholder="粘贴 MoodleSession Cookie"
+            placeholder="粘贴浏览器中的会话值"
           />
         </n-form-item>
 
-        <n-form-item label="Course ID">
+        <n-form-item label="课程 ID">
           <n-input-number
             v-model:value="form.courseId"
             :min="1"
@@ -180,21 +179,21 @@ function handleApply() {
       <template v-if="resolvedSession">
         <n-alert type="success" :show-icon="true">
           <n-space vertical size="small">
-            <n-text>Course ID: {{ resolvedSession.courseId }}</n-text>
-            <n-text>Sesskey: {{ resolvedSession.sesskey }}</n-text>
+            <n-text>课程 ID：{{ resolvedSession.courseId }}</n-text>
+            <n-text>Sesskey：{{ resolvedSession.sesskey }}</n-text>
             <n-text v-if="resolvedSession.loginInfo">
-              Login Info: {{ resolvedSession.loginInfo }}
+              登录信息：{{ resolvedSession.loginInfo }}
             </n-text>
           </n-space>
         </n-alert>
 
         <n-form label-placement="top" size="small">
-          <n-form-item label="Section">
+          <n-form-item label="章节">
             <n-select
               v-model:value="selectedSectionId"
               :options="sectionOptions"
               clearable
-              placeholder="选择要写入上传配置的 section"
+              placeholder="选择要写入上传配置的章节"
             />
           </n-form-item>
         </n-form>

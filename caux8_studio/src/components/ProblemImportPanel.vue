@@ -102,7 +102,7 @@ function handleApply() {
 </script>
 
 <template>
-  <n-card title="Problem Import">
+  <n-card title="题目导入">
     <n-space vertical size="medium">
       <n-alert type="info" :show-icon="true">
         已内置 FPS XML / YBT JSON 导入能力：可以转成 Studio 的通用 Problem，
@@ -110,7 +110,7 @@ function handleApply() {
       </n-alert>
 
       <n-form label-placement="top" size="small">
-        <n-form-item label="Import Format">
+        <n-form-item label="导入格式">
           <n-select
             v-model:value="importFormat"
             :options="importFormatOptions"
@@ -120,25 +120,25 @@ function handleApply() {
 
         <n-form-item
           v-if="importFormat === 'ybt'"
-          label="YBT Test Files Map"
+          label="YBT 测试文件映射"
         >
           <n-input
             v-model:value="ybtFilesText"
             type="textarea"
             :autosize="{ minRows: 4, maxRows: 12 }"
-            placeholder='可选。JSON 对象，例如 {"a.in":"1 2","a.out":"3"}'
+            placeholder="可选，填写测试文件内容映射"
           />
         </n-form-item>
 
-        <n-form-item :label="importFormat === 'fps' ? 'FPS XML' : 'YBT JSON'">
+        <n-form-item :label="importFormat === 'fps' ? 'FPS XML 内容' : 'YBT JSON 内容'">
           <n-input
             v-model:value="sourceText"
             type="textarea"
             :autosize="{ minRows: 12, maxRows: 24 }"
             :placeholder="
               importFormat === 'fps'
-                ? '粘贴 fps / item XML'
-                : '粘贴一本通 JSON。测试文件内容暂未从文件系统读取，可先用于导入题面和样例。'
+                ? '粘贴题目内容'
+                : '粘贴一本通题目内容。测试文件暂不从本地读取，可先导入题面和样例。'
             "
           />
         </n-form-item>
@@ -172,7 +172,7 @@ function handleApply() {
 
       <template v-if="importedProblems.length > 0">
         <n-form label-placement="top" size="small">
-          <n-form-item label="Imported Problem">
+          <n-form-item label="已导入题目">
             <n-select
               v-model:value="selectedProblemIndex"
               :options="problemOptions"
@@ -180,7 +180,7 @@ function handleApply() {
           </n-form-item>
         </n-form>
 
-        <n-divider title-placement="left">Problem Preview</n-divider>
+        <n-divider title-placement="left">题目预览</n-divider>
         <n-code
           :code="stringify(selectedProblem?.problem)"
           language="json"
@@ -193,7 +193,7 @@ function handleApply() {
           "
         />
 
-        <n-divider title-placement="left">Moodle XML Preview</n-divider>
+        <n-divider title-placement="left">Moodle XML 预览</n-divider>
         <n-code
           :code="moodleXmlPreview"
           language="xml"

@@ -111,13 +111,12 @@ const canExportXml = computed(
 <template>
   <n-layout native-scrollbar style="height: 100%; padding-left: 8px">
     <n-space vertical>
-      <n-alert type="info" :show-icon="true">
-        <template v-if="selectedAdapter.definition.action === 'upload'">
-          上传默认通过 Tauri command 执行，前端只负责编辑与适配。
-        </template>
-        <template v-else>
-          当前 adapter 只负责导出 Moodle XML，不会直接请求平台。
-        </template>
+      <n-alert
+        v-if="selectedAdapter.definition.action !== 'upload'"
+        type="info"
+        :show-icon="true"
+      >
+        当前 adapter 只负责导出 Moodle XML，不会直接请求平台。
       </n-alert>
 
       <n-button
@@ -152,9 +151,9 @@ const canExportXml = computed(
     </n-space>
 
     <n-tabs type="line" size="small" animated>
-      <n-tab-pane name="config" tab="Target Config">
+      <n-tab-pane name="config" tab="目标配置">
         <n-form label-placement="top" size="small">
-          <n-divider title-placement="left">Adapter Settings</n-divider>
+          <n-divider title-placement="left">适配器设置</n-divider>
           <n-form-item
             v-for="field in selectedAdapter.definition.targetFields"
             :key="field.key"
@@ -180,7 +179,7 @@ const canExportXml = computed(
             />
           </n-form-item>
 
-          <n-divider title-placement="left">Credentials</n-divider>
+          <n-divider title-placement="left">凭证</n-divider>
           <n-form-item
             v-for="field in selectedAdapter.definition.credentialFields"
             :key="field.key"
@@ -195,7 +194,7 @@ const canExportXml = computed(
         </n-form>
       </n-tab-pane>
 
-      <n-tab-pane name="validation" tab="Validation & Preview">
+      <n-tab-pane name="validation" tab="校验与预览">
         <n-space vertical>
           <n-alert
             v-if="validationErrors.length === 0"
@@ -233,7 +232,7 @@ const canExportXml = computed(
           </n-alert>
 
           <template v-if="selectedAdapter.definition.action === 'upload'">
-            <n-divider title-placement="left">Submission Preview</n-divider>
+            <n-divider title-placement="left">提交预览</n-divider>
             <n-code
               :code="stringify(submissionPreview)"
               language="json"
@@ -253,7 +252,7 @@ const canExportXml = computed(
               xmlPreview
             "
           >
-            <n-divider title-placement="left">XML Preview</n-divider>
+            <n-divider title-placement="left">XML 预览</n-divider>
             <n-code
               :code="xmlPreview"
               language="xml"
@@ -270,7 +269,7 @@ const canExportXml = computed(
           <template
             v-if="uploadError && selectedAdapter.definition.action === 'upload'"
           >
-            <n-divider title-placement="left">Upload Error Details</n-divider>
+            <n-divider title-placement="left">上传错误详情</n-divider>
             <n-code
               :code="stringifyUploadError(uploadError)"
               language="json"
@@ -284,7 +283,7 @@ const canExportXml = computed(
             />
           </template>
 
-          <n-divider title-placement="left">Raw Problem</n-divider>
+          <n-divider title-placement="left">原始题目数据</n-divider>
           <n-code
             :code="stringify(problem)"
             language="json"

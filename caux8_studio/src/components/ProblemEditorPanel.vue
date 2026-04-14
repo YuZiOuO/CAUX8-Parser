@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import {
+  NButton,
+  NButtonGroup,
   NCard,
   NDynamicInput,
   NForm,
@@ -25,14 +27,14 @@ const props = defineProps<{
 }>();
 
 const testcaseKindOptions = [
-  { label: "Normal", value: "normal" },
-  { label: "Precheck", value: "precheck" },
-  { label: "Both", value: "both" },
+  { label: "普通", value: "normal" },
+  { label: "预检", value: "precheck" },
+  { label: "两者都算", value: "both" },
 ];
 
 const testcaseVisibilityOptions = [
-  { label: "Show", value: "show" },
-  { label: "Hide", value: "hide" },
+  { label: "显示", value: "show" },
+  { label: "隐藏", value: "hide" },
 ];
 
 function createTestCase(): ProblemTestCase {
@@ -81,7 +83,7 @@ function updateBoolean(
 <template>
   <n-card>
     <n-tabs type="line" size="small" animated>
-      <n-tab-pane name="problem" tab="Problem Basics">
+      <n-tab-pane name="problem" tab="题目基础信息">
         <n-form label-placement="top" size="small">
           <n-grid :cols="24" :x-gap="16">
             <n-grid-item :span="24" :m-span="12">
@@ -163,7 +165,7 @@ function updateBoolean(
         </n-form>
       </n-tab-pane>
 
-      <n-tab-pane name="execution" tab="Execution & Grading">
+      <n-tab-pane name="execution" tab="执行与评分">
         <n-form label-placement="top" size="small">
           <n-grid :cols="24" :x-gap="16">
             <n-grid-item :span="24" :m-span="12">
@@ -199,7 +201,7 @@ function updateBoolean(
             </n-grid-item>
 
             <n-grid-item :span="24" :m-span="8">
-              <n-form-item label="Time Limit (s)">
+              <n-form-item label="时间限制（秒）">
                 <n-select
                   v-if="getFieldOverride('limits.timeLimitSeconds')"
                   v-model:value="problem.limits!.timeLimitSeconds"
@@ -217,7 +219,7 @@ function updateBoolean(
             </n-grid-item>
 
             <n-grid-item :span="24" :m-span="8">
-              <n-form-item label="Memory Limit (B)">
+              <n-form-item label="内存限制（字节）">
                 <n-input-number
                   v-model:value="problem.limits!.memoryLimitBytes"
                   :min="0"
@@ -263,14 +265,34 @@ function updateBoolean(
         </n-form>
       </n-tab-pane>
 
-      <n-tab-pane name="testcases" tab="Test Cases">
+      <n-tab-pane name="testcases" tab="测试用例">
         <n-dynamic-input
           v-model:value="problem.testCases"
           :on-create="createTestCase"
           show-sort-button
         >
+          <template #action="{ index, create, remove, move }">
+            <n-button-group vertical size="small">
+              <n-button title="删除" @click="remove(index)">-</n-button>
+              <n-button title="新增" @click="create(index)">+</n-button>
+              <n-button
+                title="上移"
+                :disabled="index === 0"
+                @click="move('up', index)"
+              >
+                ↑
+              </n-button>
+              <n-button
+                title="下移"
+                :disabled="index === problem.testCases.length - 1"
+                @click="move('down', index)"
+              >
+                ↓
+              </n-button>
+            </n-button-group>
+          </template>
           <template #default="{ value, index }">
-            <n-card :title="`Case ${index + 1}`" size="small" style="margin-bottom: 8px">
+            <n-card :title="`测试点 ${index + 1}`" size="small" style="margin-bottom: 8px">
               <n-form label-placement="top" size="small">
                 <n-grid :cols="24" :x-gap="16">
                   <n-grid-item :span="24" :m-span="12">
@@ -393,15 +415,15 @@ function updateBoolean(
                         :value="value.isExample ?? false"
                         @update:value="updateBoolean('isExample', $event, index)"
                       >
-                        <template #checked>Example</template>
-                        <template #unchecked>Example</template>
+                        <template #checked>示例</template>
+                        <template #unchecked>示例</template>
                       </n-switch>
                       <n-switch
                         :value="value.stopOnFailure ?? false"
                         @update:value="updateBoolean('stopOnFailure', $event, index)"
                       >
-                        <template #checked>Stop Fail</template>
-                        <template #unchecked>Stop Fail</template>
+                        <template #checked>失败即停</template>
+                        <template #unchecked>失败即停</template>
                       </n-switch>
                     </n-space>
                   </n-grid-item>

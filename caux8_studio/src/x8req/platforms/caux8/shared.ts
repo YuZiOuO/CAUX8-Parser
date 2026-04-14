@@ -33,13 +33,13 @@ export const caux8CredentialFields: AdapterFieldSpec[] = [
 export const caux8TargetFields: AdapterFieldSpec[] = [
   {
     key: "course",
-    label: "Course ID",
+    label: "课程 ID",
     input: "number",
     required: true,
   },
   {
     key: "section",
-    label: "Section ID",
+    label: "章节 ID",
     input: "number",
     required: true,
   },
@@ -52,21 +52,21 @@ export const caux8TargetFields: AdapterFieldSpec[] = [
   },
   {
     key: "gradeCategory",
-    label: "Grade Category",
+    label: "成绩分类",
     input: "number",
     required: false,
     defaultValue: 168,
   },
   {
     key: "redirectTarget",
-    label: "Redirect After Save",
+    label: "保存后跳转",
     input: "select",
     required: false,
     defaultValue: "preview",
     options: [
-      { label: "Preview", value: "preview" },
-      { label: "Course", value: "course" },
-      { label: "None", value: "none" },
+      { label: "预览页", value: "preview" },
+      { label: "课程页", value: "course" },
+      { label: "不跳转", value: "none" },
     ],
   },
 ];
@@ -97,7 +97,7 @@ export const SUPPORTED_SUBGRADES: readonly TestCaseSubgrade[] = [
 
 export const caux8QuestionAdapterDefinition: QuestionAdapterDefinition = {
   id: "caux8-http",
-  displayName: "CAU Moodle HTTP",
+  displayName: "CAU Moodle 直传",
   description: "通过 CAU Moodle 表单接口直接创建题目并上传测试用例",
   action: "upload",
   credentialFields: caux8CredentialFields,

@@ -9,14 +9,11 @@ import {
   NGlobalStyle,
   NLayout,
   NLayoutContent,
-  NLayoutHeader,
-  NPageHeader,
   NSelect,
   NSpace,
   NSplit,
   NTabPane,
   NTabs,
-  NTag,
 } from "naive-ui";
 import Caux8SessionPanel from "@/components/Caux8SessionPanel.vue";
 import ProblemImportPanel from "@/components/ProblemImportPanel.vue";
@@ -131,37 +128,23 @@ async function handleExportXml() {
   <n-config-provider>
     <n-global-style />
     <n-layout embedded style="min-height: 100vh">
-      <n-layout-header bordered style="padding: 16px">
-        <n-page-header
-          title="CAUX8 Studio"
-          subtitle="Problem Adapter Prototype"
-        >
-          <template #extra>
-            <n-space>
-              <n-tag type="info" size="small">Naive UI Only</n-tag>
-              <n-tag type="success" size="small">Tauri Ready</n-tag>
-            </n-space>
-          </template>
-        </n-page-header>
-      </n-layout-header>
-
       <n-layout-content
-        content-style="padding: 16px; height: calc(100vh - 73px); display: flex; flex-direction: column;"
+        content-style="padding: 16px; height: 100vh; display: flex; flex-direction: column;"
       >
         <n-space vertical size="medium" style="flex: 1">
           <n-tabs v-model:value="activePage" type="line" animated>
-            <n-tab-pane name="import" tab="Problem Import">
+            <n-tab-pane name="import" tab="题目导入">
               <ProblemImportPanel @apply="handleApplyImportedProblem" />
             </n-tab-pane>
 
-            <n-tab-pane name="session" tab="CAUX8 Session">
+            <n-tab-pane name="session" tab="CAUX8 会话">
               <Caux8SessionPanel @apply="handleApplySession" />
             </n-tab-pane>
 
-            <n-tab-pane name="upload" tab="Problem Output">
+            <n-tab-pane name="upload" tab="题目输出">
               <n-space vertical size="medium">
                 <n-form inline size="small">
-                  <n-form-item label="Target Adapter">
+                  <n-form-item label="目标适配器">
                     <n-select
                       v-model:value="selectedAdapterId"
                       :options="adapterOptions"
