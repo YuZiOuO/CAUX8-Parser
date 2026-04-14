@@ -54,7 +54,7 @@ const {
   uploading,
   getFieldOverride,
   submitCurrentProblem,
-  applyCaux8Session,
+  applyResolvedSession,
   replaceProblem,
   appendProblem,
   appendBlankProblem,
@@ -99,7 +99,7 @@ function handleApplySession(
   moodleSession: string,
   section?: Caux8CourseSection,
 ) {
-  applyCaux8Session(session, moodleSession, section);
+  applyResolvedSession(session, moodleSession, section);
   showSessionModal.value = false;
 }
 
@@ -240,7 +240,12 @@ async function handleExportXml() {
           </n-card>
 
           <!-- 全局会话凭据获取区 (集成在侧边栏) -->
-          <n-card v-if="selectedAdapterId === 'caux8-http'" title="平台会话抓取" size="small" :bordered="false">
+          <n-card
+            v-if="selectedAdapter.definition.sessionResolver"
+            title="平台会话抓取"
+            size="small"
+            :bordered="false"
+          >
             <Caux8SessionPanel @apply="handleApplySession" />
           </n-card>
 

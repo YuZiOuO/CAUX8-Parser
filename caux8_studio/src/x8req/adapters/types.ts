@@ -22,11 +22,20 @@ export interface AdapterFieldSpec {
   description?: string;
   defaultValue?: string | number;
   options?: AdapterFieldOption[];
+  disabled?: boolean;
+  placeholder?: string;
 }
 
 export interface ProblemFieldOverride {
   component: "select";
   options: AdapterFieldOption[];
+}
+
+export interface AdapterSessionResolverConfig {
+  courseFieldKey: string;
+  sesskeyFieldKey: string;
+  sectionFieldKey?: string;
+  moodleSessionFieldKey: string;
 }
 
 export interface QuestionAdapterDefinition {
@@ -36,6 +45,7 @@ export interface QuestionAdapterDefinition {
   action: AdapterAction;
   credentialFields: AdapterFieldSpec[];
   targetFields: AdapterFieldSpec[];
+  sessionResolver?: AdapterSessionResolverConfig;
   /**
    * Defines overrides for the universal Problem model fields for this specific adapter.
    * Keys are dot-separated paths like `limits.timeLimitSeconds` or `testCases.*.weight`.

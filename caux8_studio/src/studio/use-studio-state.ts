@@ -1,5 +1,10 @@
 import { computed, reactive, ref, toRaw, watch } from "vue";
-import { questionAdapterCatalog } from "@/x8req/adapters/catalog.js";
+import {
+  questionAdapterCatalog,
+  questionAdapterCatalogList,
+  type QuestionAdapterCatalogEntry,
+  type AdapterId,
+} from "@/x8req/adapters/catalog.js";
 import type { Problem } from "@/x8req/core/problem.js";
 import type { ProblemFieldOverride } from "@/x8req/adapters/types.js";
 import type { DynamicFormState, PrimitiveFormValue } from "@/studio/types";
@@ -33,20 +38,17 @@ function createFieldState(
 }
 
 export function useStudioState() {
-  const adapterOptions = questionAdapterCatalog.map((entry) => ({
+  const adapterOptions = questionAdapterCatalogList.map((entry) => ({
     label: entry.definition.displayName,
     value: entry.definition.id,
   }));
 
-  const selectedAdapterId = ref(adapterOptions[0]?.value ?? "");
+  const firstAdapterId = Object.keys(questionAdapterCatalog)[0] as AdapterId;
+  const selectedAdapterId = ref<AdapterId>(firstAdapterId);
 
-  const selectedAdapter = computed(() => {
-    return (
-      questionAdapterCatalog.find(
-        (entry) => entry.definition.id === selectedAdapterId.value,
-      ) ?? questionAdapterCatalog[0]
-    );
-  });
+  const selectedAdapter = computed<QuestionAdapterCatalogEntry<any, unknown>>(
+    () => questionAdapterCatalog[selectedAdapterId.value],
+  );
 
   const problems = ref<Problem[]>([createDefaultProblem()]);
   const activeProblemIndex = ref(0);
@@ -196,18 +198,23 @@ export function useStudioState() {
     }
   }
 
-  function applyCaux8Session(
+  function applyResolvedSession(
     session: Caux8SessionInfo,
     moodleSession: string,
     section?: Caux8CourseSection,
   ) {
-    selectedAdapterId.value = "caux8-http";
-    targetConfig.course = session.courseId;
-    targetConfig.sesskey = session.sesskey;
-    credentialConfig.moodleSession = moodleSession;
+    const resolver = selectedAdapter.value.definition.sessionResolver;
 
-    if (section) {
-      targetConfig.section = section.section;
+    if (!resolver) {
+      throw new Error("当前 adapter 不支持平台会话抓取");
+    }
+
+    targetConfig[resolver.courseFieldKey] = session.courseId;
+    targetConfig[resolver.sesskeyFieldKey] = session.sesskey;
+    credentialConfig[resolver.moodleSessionFieldKey] = moodleSession;
+
+    if (section && resolver.sectionFieldKey) {
+      targetConfig[resolver.sectionFieldKey] = section.section;
     }
   }
 
@@ -264,7 +271,7 @@ export function useStudioState() {
     canExecute,
     getFieldOverride,
     submitCurrentProblem,
-    applyCaux8Session,
+    applyResolvedSession,
     replaceProblem,
     appendProblem,
     appendBlankProblem,

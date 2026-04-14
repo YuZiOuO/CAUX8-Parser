@@ -24,17 +24,22 @@ export interface QuestionAdapterCatalogEntry<TTargetConfig, TPlatformQuestion> {
   exportXml?(problem: Problem, target: TTargetConfig): string;
 }
 
-export const questionAdapterCatalog: QuestionAdapterCatalogEntry<any, unknown>[] = [
-  {
+export const questionAdapterCatalog = {
+  "caux8-http": {
     definition: caux8QuestionAdapterDefinition,
     createDefaultTargetConfig: createDefaultCaux8TargetConfig,
     validate: validateCaux8Problem,
     buildSubmission: toCaux8Question,
   },
-  {
+  "moodle-xml": {
     definition: moodleXmlQuestionAdapterDefinition,
     createDefaultTargetConfig: createDefaultMoodleXmlTargetConfig,
     validate: validateMoodleXmlProblem,
     exportXml: (problem) => exportProblemToMoodleXml(problem),
   },
-];
+} as const satisfies Record<string, QuestionAdapterCatalogEntry<any, unknown>>;
+
+export type AdapterId = keyof typeof questionAdapterCatalog;
+
+export const questionAdapterCatalogList: QuestionAdapterCatalogEntry<any, unknown>[] =
+  Object.values(questionAdapterCatalog);

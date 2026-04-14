@@ -195,17 +195,17 @@ const canExportXml = computed(
               v-else-if="field.input === 'number'"
               :value="getNumberValue(targetConfig, field.key)"
               style="width: 100%"
-              :disabled="selectedAdapter.definition.id === 'caux8-http' && (field.key === 'course' || field.key === 'section')"
+              :disabled="field.disabled"
               @update:value="setFieldValue(targetConfig, field.key, $event)"
-              :placeholder="selectedAdapter.definition.id === 'caux8-http' ? (field.key === 'course' ? '课程ID，通过上方会话抓取自动填写' : (field.key === 'section' ? '章节ID，通过上方会话抓取自动填写（可选）' : '')) : ''"
+              :placeholder="field.placeholder"
             />
             <n-input
               v-else
               :value="getTextValue(targetConfig, field.key)"
               :type="field.input === 'password' ? 'password' : 'text'"
-              :disabled="selectedAdapter.definition.id === 'caux8-http' && field.key === 'sesskey'"
+              :disabled="field.disabled"
               @update:value="setFieldValue(targetConfig, field.key, $event)"
-              :placeholder="selectedAdapter.definition.id === 'caux8-http' && field.key === 'sesskey' ? 'Sesskey，通过上方会话抓取自动填写' : ''"
+              :placeholder="field.placeholder"
             />
           </n-form-item>
 
@@ -218,9 +218,9 @@ const canExportXml = computed(
             <n-input
               :value="getTextValue(credentialConfig, field.key)"
               :type="field.input === 'password' ? 'password' : 'text'"
-              :disabled="selectedAdapter.definition.id === 'caux8-http'"
+              :disabled="field.disabled"
               @update:value="setFieldValue(credentialConfig, field.key, $event)"
-              :placeholder="selectedAdapter.definition.id === 'caux8-http' ? '在此平台建议通过上方「平台会话抓取」自动获取或在此手动输入' : ''"
+              :placeholder="field.placeholder"
             />
           </n-form-item>
         </n-form>

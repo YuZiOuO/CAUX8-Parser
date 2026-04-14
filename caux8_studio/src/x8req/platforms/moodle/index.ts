@@ -1,4 +1,5 @@
 import type { Problem } from "../../core/problem.js";
+import type { QuestionAdapterDefinition } from "../../adapters/types.js";
 import {
   exportMoodleQuestionToXml,
   problemToMoodleQuestion,
@@ -13,7 +14,7 @@ export const moodleXmlQuestionAdapterDefinition = {
   action: "export-xml" as const,
   credentialFields: [],
   targetFields: [],
-};
+} satisfies QuestionAdapterDefinition;
 
 export function createDefaultMoodleXmlTargetConfig(): Partial<MoodleXmlTargetConfig> {
   return {};

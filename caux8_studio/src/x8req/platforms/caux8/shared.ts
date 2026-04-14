@@ -27,6 +27,8 @@ export const caux8CredentialFields: AdapterFieldSpec[] = [
     input: "password",
     required: true,
     description: "浏览器里拿到的 MoodleSession Cookie",
+    disabled: true,
+    placeholder: "在此平台建议通过上方「平台会话抓取」自动获取或在此手动输入",
   },
 ];
 
@@ -36,12 +38,16 @@ export const caux8TargetFields: AdapterFieldSpec[] = [
     label: "课程 ID",
     input: "number",
     required: true,
+    disabled: true,
+    placeholder: "课程ID，通过上方会话抓取自动填写",
   },
   {
     key: "section",
     label: "章节 ID",
     input: "number",
     required: true,
+    disabled: true,
+    placeholder: "章节ID，通过上方会话抓取自动填写（可选）",
   },
   {
     key: "sesskey",
@@ -49,6 +55,8 @@ export const caux8TargetFields: AdapterFieldSpec[] = [
     input: "password",
     required: true,
     description: "必须和 MoodleSession 对应",
+    disabled: true,
+    placeholder: "Sesskey，通过上方会话抓取自动填写",
   },
   {
     key: "gradeCategory",
@@ -95,13 +103,19 @@ export const SUPPORTED_SUBGRADES: readonly TestCaseSubgrade[] = [
   "0.05",
 ];
 
-export const caux8QuestionAdapterDefinition: QuestionAdapterDefinition = {
+export const caux8QuestionAdapterDefinition = {
   id: "caux8-http",
   displayName: "学吧/旧Moodle(page.cau.edu.cn)",
   description: "通过 CAU Moodle 表单接口直接创建题目并上传测试用例",
   action: "upload",
   credentialFields: caux8CredentialFields,
   targetFields: caux8TargetFields,
+  sessionResolver: {
+    courseFieldKey: "course",
+    sectionFieldKey: "section",
+    sesskeyFieldKey: "sesskey",
+    moodleSessionFieldKey: "moodleSession",
+  },
   problemFieldOverrides: {
     "execution.language": {
       component: "select",
@@ -127,7 +141,7 @@ export const caux8QuestionAdapterDefinition: QuestionAdapterDefinition = {
       })),
     },
   },
-};
+} satisfies QuestionAdapterDefinition;
 
 function omitUndefined<T extends object>(value: T): Partial<T> {
   return Object.fromEntries(
