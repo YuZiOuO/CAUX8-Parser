@@ -180,7 +180,7 @@ async function handleExportXml() {
               :style="{ backgroundColor: activeProblemIndex === index ? 'var(--n-color-hover)' : 'inherit', borderLeft: activeProblemIndex === index ? '3px solid var(--n-primary-color)' : '3px solid transparent' }"
             >
               <n-thing
-                :title="p.title || '未命名题目'"
+                :title="!p.title || p.title === 'A + B' ? '未命名题目' : p.title"
                 :description="`问题 ${index + 1}`"
               />
               <template #suffix>

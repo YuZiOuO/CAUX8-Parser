@@ -103,6 +103,27 @@ export const SUPPORTED_SUBGRADES: readonly TestCaseSubgrade[] = [
   "0.05",
 ];
 
+const SUPPORTED_SUBGRADE_OPTIONS = SUPPORTED_SUBGRADES.map((subgrade) => ({
+  subgrade,
+  weight: Number(subgrade),
+})) as readonly { subgrade: TestCaseSubgrade; weight: number }[];
+
+const SUBGRADE_BY_WEIGHT = new Map<number, TestCaseSubgrade>(
+  SUPPORTED_SUBGRADE_OPTIONS.map(({ weight, subgrade }) => [weight, subgrade]),
+);
+
+function formatSubgradeLabel(subgrade: TestCaseSubgrade): string {
+  if (subgrade === "0.0") {
+    return "0%";
+  }
+
+  if (subgrade === "1.0") {
+    return "100%";
+  }
+
+  return `${(Number(subgrade) * 100).toFixed(1)}%`;
+}
+
 export const caux8QuestionAdapterDefinition = {
   id: "caux8-http",
   displayName: "学吧/旧Moodle(page.cau.edu.cn)",
@@ -135,9 +156,9 @@ export const caux8QuestionAdapterDefinition = {
     },
     "testCases.*.weight": {
       component: "select",
-      options: SUPPORTED_SUBGRADES.map((val) => ({
-        label: val === "0.0" ? "0%" : `${(Number(val) * 100).toFixed(1)}%`,
-        value: Number(val),
+      options: SUPPORTED_SUBGRADE_OPTIONS.map(({ subgrade, weight }) => ({
+        label: formatSubgradeLabel(subgrade),
+        value: weight,
       })),
     },
   },
@@ -147,6 +168,14 @@ function omitUndefined<T extends object>(value: T): Partial<T> {
   return Object.fromEntries(
     Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined),
   ) as Partial<T>;
+}
+
+function normalizeWeightToSubgrade(weight?: number): TestCaseSubgrade | null {
+  if (weight === undefined) {
+    return "1.0";
+  }
+
+  return SUBGRADE_BY_WEIGHT.get(weight) ?? null;
 }
 
 export function validateCaux8Problem(problem: Problem): string[] {
@@ -180,10 +209,7 @@ export function validateCaux8Problem(problem: Problem): string[] {
   }
 
   problem.testCases.forEach((testCase, index) => {
-    if (
-      testCase.weight !== undefined &&
-      !SUPPORTED_SUBGRADES.includes(String(testCase.weight) as TestCaseSubgrade)
-    ) {
+    if (testCase.weight !== undefined && normalizeWeightToSubgrade(testCase.weight) === null) {
       errors.push(`testCases[${index}].weight 不是 CAUX8 支持的分值比例`);
     }
   });
@@ -200,12 +226,8 @@ function toCompileOnlyFlag(compileOnly?: boolean): NumberBoolean | undefined {
 }
 
 function toSubgrade(weight?: number): TestCaseSubgrade {
-  if (weight === undefined) {
-    return "1.0";
-  }
-
-  const subgrade = String(weight) as TestCaseSubgrade;
-  if (!SUPPORTED_SUBGRADES.includes(subgrade)) {
+  const subgrade = normalizeWeightToSubgrade(weight);
+  if (subgrade === null) {
     throw new Error(`CAUX8 不支持的测试点权重: ${weight}`);
   }
 
