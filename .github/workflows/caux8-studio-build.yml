@@ -15,13 +15,13 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact_name: caux8-studio-linux
-            artifact_path: caux8_studio/src-tauri/target/release/caux8-studio
+            artifact_path: src-tauri/target/release/caux8-studio
           - os: windows-latest
             artifact_name: caux8-studio-windows
-            artifact_path: caux8_studio/src-tauri/target/release/caux8-studio.exe
+            artifact_path: src-tauri/target/release/caux8-studio.exe
           - os: macos-latest
             artifact_name: caux8-studio-macos
-            artifact_path: caux8_studio/src-tauri/target/release/caux8-studio
+            artifact_path: src-tauri/target/release/caux8-studio
 
     runs-on: ${{ matrix.os }}
 
@@ -48,11 +48,9 @@ jobs:
             librsvg2-dev
 
       - name: Install frontend dependencies
-        working-directory: caux8_studio
         run: bun install --frozen-lockfile
 
       - name: Build Tauri app
-        working-directory: caux8_studio
         run: bun run tauri:build
 
       - name: Upload binary artifact
