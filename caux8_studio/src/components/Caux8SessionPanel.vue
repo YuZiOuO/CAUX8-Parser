@@ -3,7 +3,6 @@ import { computed, reactive, ref } from "vue";
 import {
   NAlert,
   NButton,
-  NCard,
   NCode,
   NForm,
   NFormItem,
@@ -12,6 +11,7 @@ import {
   NSelect,
   NSpace,
   NText,
+  NScrollbar,
   createDiscreteApi,
 } from "naive-ui";
 import {
@@ -124,11 +124,11 @@ function handleApply() {
 </script>
 
 <template>
-  <n-card title="CAUX8 会话解析">
-    <n-space vertical size="medium">
-      <n-alert type="info" :show-icon="true">
-        输入浏览器里的 MoodleSession 和课程 ID，解析 sesskey 与课程 section 列表。
-      </n-alert>
+  <div style="padding: 0;">
+    <n-space vertical size="small">
+      <n-text depth="3" style="font-size: 12px; display: block; margin-bottom: 4px;">
+        在下方输入原平台会话与课程 ID，即可自动解析提炼 Sesskey 与可选章节。
+      </n-text>
 
       <n-form label-placement="top" size="small">
         <n-form-item label="MoodleSession">
@@ -177,7 +177,7 @@ function handleApply() {
       </n-alert>
 
       <template v-if="resolvedSession">
-        <n-alert type="success" :show-icon="true">
+        <n-alert type="success" :show-icon="false">
           <n-space vertical size="small">
             <n-text>课程 ID：{{ resolvedSession.courseId }}</n-text>
             <n-text>Sesskey：{{ resolvedSession.sesskey }}</n-text>
@@ -187,7 +187,7 @@ function handleApply() {
           </n-space>
         </n-alert>
 
-        <n-form label-placement="top" size="small">
+        <n-form label-placement="top" size="small" :show-feedback="false">
           <n-form-item label="章节">
             <n-select
               v-model:value="selectedSectionId"
@@ -198,31 +198,33 @@ function handleApply() {
           </n-form-item>
         </n-form>
 
-        <n-code
-          :code="stringify(resolvedSession)"
-          language="json"
-          style="
-            max-height: 240px;
-            overflow: auto;
-            border: 1px solid var(--n-border-color);
-            border-radius: 4px;
-            padding: 8px;
-          "
-        />
+        <n-card
+          embedded
+          size="small"
+          content-style="padding: 0;"
+          :bordered="false"
+        >
+          <n-scrollbar style="max-height: 240px;">
+            <div style="padding: 12px;">
+              <n-code :code="stringify(resolvedSession)" language="json" word-wrap />
+            </div>
+          </n-scrollbar>
+        </n-card>
       </template>
 
-      <n-code
+      <n-card
         v-if="resolveError"
-        :code="stringify(resolveError)"
-        language="json"
-        style="
-          max-height: 240px;
-          overflow: auto;
-          border: 1px solid var(--n-border-color);
-          border-radius: 4px;
-          padding: 8px;
-        "
-      />
+        embedded
+        size="small"
+        content-style="padding: 0;"
+        :bordered="false"
+      >
+        <n-scrollbar style="max-height: 240px;">
+          <div style="padding: 12px;">
+            <n-code :code="stringify(resolveError)" language="json" word-wrap />
+          </div>
+        </n-scrollbar>
+      </n-card>
     </n-space>
-  </n-card>
+  </div>
 </template>

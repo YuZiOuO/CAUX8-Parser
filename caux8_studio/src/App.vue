@@ -9,11 +9,16 @@ import {
   NGlobalStyle,
   NLayout,
   NLayoutContent,
+  NLayoutSider,
   NSelect,
   NSpace,
-  NSplit,
-  NTabPane,
-  NTabs,
+  NDivider,
+  NModal,
+  NButton,
+  NCard,
+  NList,
+  NListItem,
+  NThing,
 } from "naive-ui";
 import Caux8SessionPanel from "@/components/Caux8SessionPanel.vue";
 import ProblemImportPanel from "@/components/ProblemImportPanel.vue";
@@ -35,6 +40,8 @@ const {
   adapterOptions,
   selectedAdapterId,
   selectedAdapter,
+  problems,
+  activeProblemIndex,
   problem,
   targetConfig,
   credentialConfig,
@@ -49,11 +56,16 @@ const {
   submitCurrentProblem,
   applyCaux8Session,
   replaceProblem,
+  appendProblem,
+  appendBlankProblem,
+  removeProblem,
 } = useStudioState();
 
 const { message } = createDiscreteApi(["message"]);
 const uploadError = ref<RuntimeCommandErrorInfo | null>(null);
-const activePage = ref("upload");
+
+const showImportModal = ref(false);
+const showSessionModal = ref(false);
 
 async function handleUpload() {
   try {
@@ -88,12 +100,12 @@ function handleApplySession(
   section?: Caux8CourseSection,
 ) {
   applyCaux8Session(session, moodleSession, section);
-  activePage.value = "upload";
+  showSessionModal.value = false;
 }
 
-function handleApplyImportedProblem(problem: Problem) {
-  replaceProblem(problem);
-  activePage.value = "upload";
+function handleApplyImportedProblem(problemInput: Problem) {
+  replaceProblem(problemInput);
+  showImportModal.value = false;
 }
 
 async function handleExportXml() {
@@ -104,7 +116,7 @@ async function handleExportXml() {
   try {
     const result = await exportXmlToFile({
       xml: xmlPreview.value,
-      defaultFileName: problem.title || "problem.xml",
+      defaultFileName: problem.value.title || "problem.xml",
     });
 
     if (result.canceled) {
@@ -127,82 +139,129 @@ async function handleExportXml() {
 <template>
   <n-config-provider>
     <n-global-style />
-    <n-layout embedded style="min-height: 100vh">
-      <n-layout-content
-        content-style="padding: 16px; height: 100vh; display: flex; flex-direction: column;"
+    
+    <!-- 弹窗：导入题目 -->
+    <n-modal
+      v-model:show="showImportModal"
+      preset="card"
+      title="导入题目"
+      style="width: 900px; max-width: 90vw;"
+    >
+      <ProblemImportPanel @apply="handleApplyImportedProblem" />
+    </n-modal>
+
+    <n-layout has-sider position="absolute">
+      <!-- 左栏：数据源与列表 (Data Source & List) -->
+      <n-layout-sider
+        bordered
+        collapse-mode="width"
+        :collapsed-width="0"
+        :width="260"
+        show-trigger="arrow-circle"
+        :native-scrollbar="false"
+        content-style="padding: 16px;"
       >
-        <n-space vertical size="medium" style="flex: 1">
-          <n-tabs v-model:value="activePage" type="line" animated>
-            <n-tab-pane name="import" tab="题目导入">
-              <ProblemImportPanel @apply="handleApplyImportedProblem" />
-            </n-tab-pane>
+        <n-space vertical>
+          <n-button type="primary" dashed block @click="showImportModal = true">
+            导入题目
+          </n-button>
 
-            <n-tab-pane name="session" tab="CAUX8 会话">
-              <Caux8SessionPanel @apply="handleApplySession" />
-            </n-tab-pane>
+          <n-button secondary block @click="appendBlankProblem">
+            新建空题目
+          </n-button>
+          
+          <n-divider />
 
-            <n-tab-pane name="upload" tab="题目输出">
-              <n-space vertical size="medium">
-                <n-form inline size="small">
-                  <n-form-item label="目标适配器">
-                    <n-select
-                      v-model:value="selectedAdapterId"
-                      :options="adapterOptions"
-                      style="width: 300px"
-                    />
-                  </n-form-item>
-                  <n-alert
-                    v-if="selectedAdapter"
-                    type="info"
-                    :show-icon="true"
-                    style="margin-left: 16px"
-                  >
-                    {{ selectedAdapter.definition.description }}
-                  </n-alert>
-                </n-form>
-
-                <n-split
-                  direction="horizontal"
-                  style="height: calc(100vh - 190px)"
-                  :default-size="0.6"
-                  :min="0.3"
-                  :max="0.8"
+          <n-list hoverable clickable>
+            <n-list-item
+              v-for="(p, index) in problems"
+              :key="index"
+              @click="activeProblemIndex = index"
+              :style="{ backgroundColor: activeProblemIndex === index ? 'var(--n-color-hover)' : 'inherit', borderLeft: activeProblemIndex === index ? '3px solid var(--n-primary-color)' : '3px solid transparent' }"
+            >
+              <n-thing
+                :title="p.title || '未命名题目'"
+                :description="`问题 ${index + 1}`"
+              />
+              <template #suffix>
+                <n-button
+                  size="tiny"
+                  circle
+                  quaternary
+                  type="error"
+                  @click.stop="removeProblem(index)"
                 >
-                  <template #1>
-                    <n-layout
-                      native-scrollbar
-                      style="height: 100%; padding-right: 8px"
-                    >
-                      <ProblemEditorPanel
-                        :problem="problem"
-                        :validation-error-map="validationErrorMap"
-                        :get-field-override="getFieldOverride"
-                      />
-                    </n-layout>
-                  </template>
-                  <template #2>
-                    <StudioSidebar
-                      :selected-adapter="selectedAdapter"
-                      :target-config="targetConfig"
-                      :credential-config="credentialConfig"
-                      :validation-errors="validationErrors"
-                      :target-missing-fields="targetMissingFields"
-                      :credential-missing-fields="credentialMissingFields"
-                      :submission-preview="submissionPreview"
-                      :xml-preview="xmlPreview"
-                      :problem="problem"
-                      :uploading="uploading"
-                      :upload-error="uploadError"
-                      @submit="handleUpload"
-                      @export-xml="handleExportXml"
-                    />
-                  </template>
-                </n-split>
-              </n-space>
-            </n-tab-pane>
-          </n-tabs>
+                  ×
+                </n-button>
+              </template>
+            </n-list-item>
+          </n-list>
         </n-space>
-      </n-layout-content>
+      </n-layout-sider>
+
+      <!-- 中栏：通用问题编辑器 (Editor) -->
+      <n-layout
+        :native-scrollbar="false"
+        content-style="padding: 16px;"
+      >
+        <ProblemEditorPanel
+          :problem="problem"
+          :validation-error-map="validationErrorMap"
+          :get-field-override="getFieldOverride"
+        />
+      </n-layout>
+
+      <!-- 右栏：平台发布与全局配置中心 (Publish & Global Config) -->
+      <n-layout-sider
+        bordered
+        :width="420"
+        :native-scrollbar="false"
+        content-style="padding: 16px; background-color: var(--n-border-color);"
+      >
+        <n-space vertical size="medium">
+          <!-- 平台选择区 -->
+          <n-card title="目标平台源" size="small" :bordered="false">
+            <n-form label-placement="top" size="small" :show-feedback="false">
+              <n-form-item label="全局发布适配器">
+                <n-select
+                  v-model:value="selectedAdapterId"
+                  :options="adapterOptions"
+                />
+              </n-form-item>
+            </n-form>
+
+            <n-text
+              v-if="selectedAdapter"
+              depth="3"
+              style="display: block; font-size: 12px; margin-top: 12px;"
+            >
+              {{ selectedAdapter.definition.description }}
+            </n-text>
+          </n-card>
+
+          <!-- 全局会话凭据获取区 (集成在侧边栏) -->
+          <n-card v-if="selectedAdapterId === 'caux8-http'" title="平台会话抓取" size="small" :bordered="false">
+            <Caux8SessionPanel @apply="handleApplySession" />
+          </n-card>
+
+          <!-- 具体 Adapter 参数及上传/导出执行 -->
+          <StudioSidebar
+            :selected-adapter="selectedAdapter"
+            :target-config="targetConfig"
+            :credential-config="credentialConfig"
+            :validation-errors="validationErrors"
+            :target-missing-fields="targetMissingFields"
+            :credential-missing-fields="credentialMissingFields"
+            :submission-preview="submissionPreview"
+            :xml-preview="xmlPreview"
+            :problem="problem"
+            :uploading="uploading"
+            :upload-error="uploadError"
+            @submit="handleUpload"
+            @export-xml="handleExportXml"
+          />
+        </n-space>
+      </n-layout-sider>
     </n-layout>
   </n-config-provider>
 </template>

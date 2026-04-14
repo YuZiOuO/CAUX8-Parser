@@ -48,7 +48,11 @@ export function useStudioState() {
     );
   });
 
-  const problem = reactive(createDefaultProblem());
+  const problems = ref<Problem[]>([createDefaultProblem()]);
+  const activeProblemIndex = ref(0);
+
+  const problem = computed(() => problems.value[activeProblemIndex.value]);
+
   const targetConfig = reactive<DynamicFormState>({});
   const credentialConfig = reactive<DynamicFormState>({});
   const uploading = ref(false);
@@ -68,7 +72,7 @@ export function useStudioState() {
 
   watch(selectedAdapterId, initializeDynamicState, { immediate: true, flush: "sync" });
 
-  const validationErrors = computed(() => selectedAdapter.value.validate(problem));
+  const validationErrors = computed(() => selectedAdapter.value.validate(problem.value));
 
   // 将验证错误列表解析为以字段路径为 key 的对象，方便对齐到具体表单项
   const validationErrorMap = computed(() => {
@@ -136,7 +140,7 @@ export function useStudioState() {
 
     try {
       return selectedAdapter.value.buildSubmission(
-        problem,
+        problem.value,
         targetConfig as never,
       );
     } catch (error) {
@@ -156,7 +160,7 @@ export function useStudioState() {
     }
 
     try {
-      return selectedAdapter.value.exportXml(problem, targetConfig as never);
+      return selectedAdapter.value.exportXml(problem.value, targetConfig as never);
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
       return `<!-- XML export failed: ${detail} -->`;
@@ -176,7 +180,7 @@ export function useStudioState() {
     }
 
     const question = selectedAdapter.value.buildSubmission(
-      problem,
+      problem.value,
       targetConfig as never,
     );
 
@@ -208,17 +212,45 @@ export function useStudioState() {
   }
 
   function replaceProblem(nextProblem: Problem) {
-    for (const key of Object.keys(problem)) {
-      delete problem[key as keyof Problem];
+    if (problems.value.length === 0) {
+      problems.value.push(structuredClone(nextProblem));
+      activeProblemIndex.value = 0;
+    } else {
+      problems.value[activeProblemIndex.value] = structuredClone(nextProblem);
     }
+  }
 
-    Object.assign(problem, structuredClone(nextProblem));
+  function appendProblem(nextProblem: Problem) {
+    problems.value.push(structuredClone(nextProblem));
+    activeProblemIndex.value = problems.value.length - 1;
+  }
+
+  function appendBlankProblem() {
+    problems.value.push(createDefaultProblem());
+    activeProblemIndex.value = problems.value.length - 1;
+  }
+
+  function removeProblem(index: number) {
+    if (problems.value.length <= 1) {
+      // 最后一题不能删除，直接重置
+      problems.value[0] = createDefaultProblem();
+      return;
+    }
+    
+    problems.value.splice(index, 1);
+    if (activeProblemIndex.value >= problems.value.length) {
+      activeProblemIndex.value = problems.value.length - 1;
+    } else if (activeProblemIndex.value > index) {
+      activeProblemIndex.value--;
+    }
   }
 
   return {
     adapterOptions,
     selectedAdapterId,
     selectedAdapter,
+    problems,
+    activeProblemIndex,
     problem,
     targetConfig,
     credentialConfig,
@@ -234,5 +266,8 @@ export function useStudioState() {
     submitCurrentProblem,
     applyCaux8Session,
     replaceProblem,
+    appendProblem,
+    appendBlankProblem,
+    removeProblem,
   };
 }

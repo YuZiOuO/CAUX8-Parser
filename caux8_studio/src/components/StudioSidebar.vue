@@ -12,8 +12,12 @@ import {
   NLayout,
   NSpace,
   NSelect,
-  NTabPane,
-  NTabs,
+  NCard,
+  NCollapse,
+  NCollapseItem,
+  NBadge,
+  NTag,
+  NScrollbar,
 } from "naive-ui";
 import type { QuestionAdapterCatalogEntry } from "@/x8req/adapters/catalog.js";
 import type { DynamicFormState, PrimitiveFormValue } from "@/studio/types";
@@ -109,15 +113,15 @@ const canExportXml = computed(
 </script>
 
 <template>
-  <n-layout native-scrollbar style="height: 100%; padding-left: 8px">
+  <n-card title="发布设置与执行" size="small" :bordered="false">
     <n-space vertical>
-      <n-alert
+      <n-text
         v-if="selectedAdapter.definition.action !== 'upload'"
-        type="info"
-        :show-icon="true"
+        depth="3"
+        style="display: block; font-size: 12px; margin-bottom: 8px;"
       >
-        当前 adapter 只负责导出 Moodle XML，不会直接请求平台。
-      </n-alert>
+        提示：该模式只负责离线导出文件或预览，不会有任何上云网络请求。
+      </n-text>
 
       <n-button
         v-if="selectedAdapter.definition.action === 'upload'"
@@ -144,20 +148,42 @@ const canExportXml = computed(
         v-if="uploadError && selectedAdapter.definition.action === 'upload'"
         type="error"
         title="上传失败"
-        :show-icon="true"
+        :show-icon="false"
       >
         {{ uploadError.message }}
       </n-alert>
     </n-space>
 
-    <n-tabs type="line" size="small" animated>
-      <n-tab-pane name="config" tab="目标配置">
-        <n-form label-placement="top" size="small">
-          <n-divider title-placement="left">适配器设置</n-divider>
+    <n-divider />
+
+      <n-collapse :default-expanded-names="['config']">
+        <n-collapse-item name="config" title="基础设置与凭证">
+          <template #header-extra>
+            <n-tag
+              v-if="targetMissingFields.length > 0 || credentialMissingFields.length > 0"
+              type="error"
+              size="small"
+              round
+            >
+              配置未完善
+            </n-tag>
+            <n-tag
+              v-else
+              type="success"
+              size="small"
+              round
+            >
+              配置就绪
+            </n-tag>
+          </template>
+          <n-form label-placement="top" size="small" :show-feedback="false">
+            <!-- 适配器设置和凭证区 -->
+            <n-divider title-placement="left" style="margin-top: 0;">适配器设置</n-divider>
           <n-form-item
             v-for="field in selectedAdapter.definition.targetFields"
             :key="field.key"
             :label="field.label"
+            style="margin-bottom: 12px;"
           >
             <n-select
               v-if="field.input === 'select'"
@@ -169,17 +195,21 @@ const canExportXml = computed(
               v-else-if="field.input === 'number'"
               :value="getNumberValue(targetConfig, field.key)"
               style="width: 100%"
+              :disabled="selectedAdapter.definition.id === 'caux8-http' && (field.key === 'course' || field.key === 'section')"
               @update:value="setFieldValue(targetConfig, field.key, $event)"
+              :placeholder="selectedAdapter.definition.id === 'caux8-http' ? (field.key === 'course' ? '课程ID，通过上方会话抓取自动填写' : (field.key === 'section' ? '章节ID，通过上方会话抓取自动填写（可选）' : '')) : ''"
             />
             <n-input
               v-else
               :value="getTextValue(targetConfig, field.key)"
               :type="field.input === 'password' ? 'password' : 'text'"
+              :disabled="selectedAdapter.definition.id === 'caux8-http' && field.key === 'sesskey'"
               @update:value="setFieldValue(targetConfig, field.key, $event)"
+              :placeholder="selectedAdapter.definition.id === 'caux8-http' && field.key === 'sesskey' ? 'Sesskey，通过上方会话抓取自动填写' : ''"
             />
           </n-form-item>
 
-          <n-divider title-placement="left">凭证</n-divider>
+          <n-divider title-placement="left">凭证 (Session与凭据)</n-divider>
           <n-form-item
             v-for="field in selectedAdapter.definition.credentialFields"
             :key="field.key"
@@ -188,18 +218,38 @@ const canExportXml = computed(
             <n-input
               :value="getTextValue(credentialConfig, field.key)"
               :type="field.input === 'password' ? 'password' : 'text'"
+              :disabled="selectedAdapter.definition.id === 'caux8-http'"
               @update:value="setFieldValue(credentialConfig, field.key, $event)"
+              :placeholder="selectedAdapter.definition.id === 'caux8-http' ? '在此平台建议通过上方「平台会话抓取」自动获取或在此手动输入' : ''"
             />
           </n-form-item>
         </n-form>
-      </n-tab-pane>
+      </n-collapse-item>
 
-      <n-tab-pane name="validation" tab="校验与预览">
-        <n-space vertical>
+      <n-collapse-item name="validation" title="校验与预览日志">
+        <template #header-extra>
+          <n-tag
+            v-if="validationErrors.length > 0 || targetMissingFields.length > 0 || credentialMissingFields.length > 0"
+            type="error"
+            size="small"
+            round
+          >
+            有校验或必填项缺失
+          </n-tag>
+          <n-tag
+            v-else
+            type="success"
+            size="small"
+            round
+          >
+            校验通过
+          </n-tag>
+        </template>
+        <n-space vertical size="small">
           <n-alert
             v-if="validationErrors.length === 0"
             type="success"
-            :show-icon="true"
+            :show-icon="false"
           >
             通用题目字段校验通过
           </n-alert>
@@ -208,7 +258,7 @@ const canExportXml = computed(
             v-for="error in validationErrors"
             :key="error"
             type="error"
-            :show-icon="true"
+            :show-icon="false"
           >
             {{ error }}
           </n-alert>
@@ -217,7 +267,7 @@ const canExportXml = computed(
             v-for="fieldLabel in targetMissingFields"
             :key="fieldLabel"
             type="warning"
-            :show-icon="true"
+            :show-icon="false"
           >
             缺少目标平台字段：{{ fieldLabel }}
           </n-alert>
@@ -226,24 +276,29 @@ const canExportXml = computed(
             v-for="fieldLabel in credentialMissingFields"
             :key="fieldLabel"
             type="warning"
-            :show-icon="true"
+            :show-icon="false"
           >
             缺少凭证字段：{{ fieldLabel }}
           </n-alert>
 
           <template v-if="selectedAdapter.definition.action === 'upload'">
             <n-divider title-placement="left">提交预览</n-divider>
-            <n-code
-              :code="stringify(submissionPreview)"
-              language="json"
-              style="
-                max-height: 200px;
-                overflow: auto;
-                border: 1px solid var(--n-border-color);
-                border-radius: 4px;
-                padding: 8px;
-              "
-            />
+            <n-card
+              embedded
+              size="small"
+              content-style="padding: 0;"
+              :bordered="false"
+            >
+              <n-scrollbar style="max-height: 200px;">
+                <div style="padding: 12px;">
+                  <n-code
+                    :code="stringify(submissionPreview)"
+                    language="json"
+                    word-wrap
+                  />
+                </div>
+              </n-scrollbar>
+            </n-card>
           </template>
 
           <template
@@ -253,50 +308,65 @@ const canExportXml = computed(
             "
           >
             <n-divider title-placement="left">XML 预览</n-divider>
-            <n-code
-              :code="xmlPreview"
-              language="xml"
-              style="
-                max-height: 240px;
-                overflow: auto;
-                border: 1px solid var(--n-border-color);
-                border-radius: 4px;
-                padding: 8px;
-              "
-            />
+            <n-card
+              embedded
+              size="small"
+              content-style="padding: 0;"
+              :bordered="false"
+            >
+              <n-scrollbar style="max-height: 240px;" x-scrollable>
+                <div style="padding: 12px;">
+                  <n-code
+                    :code="xmlPreview"
+                    language="xml"
+                    word-wrap
+                  />
+                </div>
+              </n-scrollbar>
+            </n-card>
           </template>
 
           <template
             v-if="uploadError && selectedAdapter.definition.action === 'upload'"
           >
             <n-divider title-placement="left">上传错误详情</n-divider>
-            <n-code
-              :code="stringifyUploadError(uploadError)"
-              language="json"
-              style="
-                max-height: 240px;
-                overflow: auto;
-                border: 1px solid var(--n-border-color);
-                border-radius: 4px;
-                padding: 8px;
-              "
-            />
+            <n-card
+              embedded
+              size="small"
+              content-style="padding: 0;"
+              :bordered="false"
+            >
+              <n-scrollbar style="max-height: 240px;">
+                <div style="padding: 12px;">
+                  <n-code
+                    :code="stringifyUploadError(uploadError)"
+                    language="json"
+                    word-wrap
+                  />
+                </div>
+              </n-scrollbar>
+            </n-card>
           </template>
 
           <n-divider title-placement="left">原始题目数据</n-divider>
-          <n-code
-            :code="stringify(problem)"
-            language="json"
-            style="
-              max-height: 200px;
-              overflow: auto;
-              border: 1px solid var(--n-border-color);
-              border-radius: 4px;
-              padding: 8px;
-            "
-          />
+          <n-card
+            embedded
+            size="small"
+            content-style="padding: 0;"
+            :bordered="false"
+          >
+            <n-scrollbar style="max-height: 200px;">
+              <div style="padding: 12px;">
+                <n-code
+                  :code="stringify(problem)"
+                  language="json"
+                  word-wrap
+                />
+              </div>
+            </n-scrollbar>
+          </n-card>
         </n-space>
-      </n-tab-pane>
-    </n-tabs>
-  </n-layout>
+      </n-collapse-item>
+    </n-collapse>
+  </n-card>
 </template>

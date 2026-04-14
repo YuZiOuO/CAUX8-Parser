@@ -11,6 +11,8 @@ import {
   NInput,
   NSelect,
   NSpace,
+  NText,
+  NScrollbar,
   createDiscreteApi,
 } from "naive-ui";
 import type { Problem } from "@/x8req/core/problem.js";
@@ -104,10 +106,10 @@ function handleApply() {
 <template>
   <n-card title="题目导入">
     <n-space vertical size="medium">
-      <n-alert type="info" :show-icon="true">
-        已内置 FPS XML / YBT JSON 导入能力：可以转成 Studio 的通用 Problem，
-        并同时生成 Moodle CodeRunner XML 预览。
-      </n-alert>
+      <n-text depth="3" style="font-size: 12px; display: block; margin-bottom: 12px;">
+        已内置 FPS XML / YBT JSON 导入能力：导入的内容可以直接转成 Studio 的通用 Problem，
+        并同时生成 Moodle XML 验证预览。
+      </n-text>
 
       <n-form label-placement="top" size="small">
         <n-form-item label="导入格式">
@@ -181,30 +183,32 @@ function handleApply() {
         </n-form>
 
         <n-divider title-placement="left">题目预览</n-divider>
-        <n-code
-          :code="stringify(selectedProblem?.problem)"
-          language="json"
-          style="
-            max-height: 360px;
-            overflow: auto;
-            border: 1px solid var(--n-border-color);
-            border-radius: 4px;
-            padding: 8px;
-          "
-        />
+        <n-card
+          embedded
+          size="small"
+          content-style="padding: 0;"
+          :bordered="false"
+        >
+          <n-scrollbar style="max-height: 360px;">
+            <div style="padding: 12px;">
+              <n-code :code="stringify(selectedProblem?.problem)" language="json" word-wrap />
+            </div>
+          </n-scrollbar>
+        </n-card>
 
         <n-divider title-placement="left">Moodle XML 预览</n-divider>
-        <n-code
-          :code="moodleXmlPreview"
-          language="xml"
-          style="
-            max-height: 360px;
-            overflow: auto;
-            border: 1px solid var(--n-border-color);
-            border-radius: 4px;
-            padding: 8px;
-          "
-        />
+        <n-card
+          embedded
+          size="small"
+          content-style="padding: 0;"
+          :bordered="false"
+        >
+          <n-scrollbar style="max-height: 360px;">
+            <div style="padding: 12px;">
+              <n-code :code="moodleXmlPreview" language="xml" word-wrap />
+            </div>
+          </n-scrollbar>
+        </n-card>
       </template>
     </n-space>
   </n-card>
