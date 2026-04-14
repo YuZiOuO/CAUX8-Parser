@@ -2,5 +2,4 @@
 .codex
 node_modules
 dist
-# for unit tests
-/tests/hello_world.xml
+src-tauri/target
