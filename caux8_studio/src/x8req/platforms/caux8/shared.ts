@@ -97,7 +97,7 @@ export const SUPPORTED_SUBGRADES: readonly TestCaseSubgrade[] = [
 
 export const caux8QuestionAdapterDefinition: QuestionAdapterDefinition = {
   id: "caux8-http",
-  displayName: "CAU Moodle 直传",
+  displayName: "学吧/旧Moodle(page.cau.edu.cn)",
   description: "通过 CAU Moodle 表单接口直接创建题目并上传测试用例",
   action: "upload",
   credentialFields: caux8CredentialFields,

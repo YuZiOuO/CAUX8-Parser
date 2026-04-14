@@ -220,9 +220,9 @@ async function handleExportXml() {
       >
         <n-space vertical size="medium">
           <!-- 平台选择区 -->
-          <n-card title="目标平台源" size="small" :bordered="false">
+          <n-card title="目标平台" size="small" :bordered="false">
             <n-form label-placement="top" size="small" :show-feedback="false">
-              <n-form-item label="全局发布适配器">
+              <n-form-item label="选择适配器">
                 <n-select
                   v-model:value="selectedAdapterId"
                   :options="adapterOptions"
