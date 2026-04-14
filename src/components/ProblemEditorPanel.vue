@@ -17,8 +17,8 @@ import {
   NTabs,
   NText,
 } from "naive-ui";
-import type { Problem, ProblemTestCase } from "@/x8req/core/problem.js";
-import type { ProblemFieldOverride } from "@/x8req/adapters/types.js";
+import type { Problem, ProblemTestCase } from "@/problem/model/problem.js";
+import type { ProblemFieldOverride } from "@/problem/adapters/types.js";
 
 const props = defineProps<{
   problem: Problem;

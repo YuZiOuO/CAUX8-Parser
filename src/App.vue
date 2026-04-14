@@ -34,7 +34,7 @@ import type {
   Caux8SessionInfo,
 } from "@/runtime/session";
 import { useStudioState } from "@/studio/use-studio-state";
-import type { Problem } from "@/x8req/core/problem.js";
+import type { Problem } from "@/problem/model/problem.js";
 
 const {
   adapterOptions,

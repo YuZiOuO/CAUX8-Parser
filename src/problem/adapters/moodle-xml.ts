@@ -1,9 +1,9 @@
-import type { Problem } from "../../core/problem.js";
-import type { QuestionAdapterDefinition } from "../../adapters/types.js";
+import type { Problem } from "../model/problem.js";
+import type { QuestionAdapterDefinition } from "./types.js";
 import {
   exportMoodleQuestionToXml,
   problemToMoodleQuestion,
-} from "../../moodle/index.js";
+} from "../formats/moodle/index.js";
 
 export interface MoodleXmlTargetConfig {}
 

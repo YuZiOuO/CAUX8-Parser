@@ -6,14 +6,13 @@
 
 当前目标：
 
-- 在 `studio` 内部维护一层 `x8req` 抽象
+- 在 `studio` 内部维护一层 `problem` 抽象
 - 用单页面验证通用题目模型是否足够支撑后续 UI
 - 直接以 Tauri 作为桌面运行时承载真实上传
 
 开发命令：
 
 ```bash
-cd caux8_studio
 bun install
 bun dev
 bun run tauri:dev
@@ -25,16 +24,16 @@ Ubuntu 24.04 如果第一次接 Tauri，需要先安装系统依赖：
 sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
 ```
 
-当前目录结构里，`x8req` 已经直接收进 `studio/src/x8req/`，界面层直接依赖这层抽象。
+当前目录结构里，`problem` 已经直接收进 `src/problem/`，界面层直接依赖这层抽象。
 这样后续如果接入 Tauri：
 
-- 可以继续让界面直接调本地 `x8req` TS 映射逻辑
+- 可以继续让界面直接调本地 `problem` TS 映射逻辑
 - 也可以把上传动作替换成 Tauri command
 - 如果后面要再包一层前端 API，也可以在 `studio` 内部做，不需要再引用外部工程
 
 当前前端分层：
 
-- `src/x8req/`: 平台无关题目模型 + adapter 目录 + 平台映射与导出/上传实现
+- `src/problem/`: 平台无关题目模型 + adapter 目录 + 平台映射与导出/上传实现
 - `src/studio/`: Studio 页面状态、默认题目、动态表单状态
 - `src/components/`: 纯界面组件，尽量不直接接触平台上传细节
 - `src/runtime/`: Tauri command 调用边界
@@ -77,7 +76,7 @@ invoke("submit_problem", {
 - 返回 `{ ok, message, data }`
 
 这样可以直接绕开浏览器 CORS，同时也不会把 cookie/session 处理暴露在页面层。
-平台映射逻辑仍然只保留在 `src/x8req/` 这一份，桌面端只负责上传。
+平台映射逻辑仍然只保留在 `src/problem/` 这一份，桌面端只负责上传。
 
 CAUX8 Session 页内置了会话解析逻辑：
 

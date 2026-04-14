@@ -1,4 +1,4 @@
-import type { Problem, ProblemTestCase } from "../core/problem.js";
+import type { Problem, ProblemTestCase } from "../../model/problem.js";
 import { feedback, testType } from "./enums.js";
 import {
   createMoodleQuestion,

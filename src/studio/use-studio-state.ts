@@ -4,9 +4,9 @@ import {
   questionAdapterCatalogList,
   type QuestionAdapterCatalogEntry,
   type AdapterId,
-} from "@/x8req/adapters/catalog.js";
-import type { Problem } from "@/x8req/core/problem.js";
-import type { ProblemFieldOverride } from "@/x8req/adapters/types.js";
+} from "@/problem/adapters/catalog.js";
+import type { Problem } from "@/problem/model/problem.js";
+import type { ProblemFieldOverride } from "@/problem/adapters/types.js";
 import type { DynamicFormState, PrimitiveFormValue } from "@/studio/types";
 import { createDefaultProblem } from "@/studio/default-problem";
 import type {

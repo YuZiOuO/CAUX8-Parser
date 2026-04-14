@@ -1,4 +1,4 @@
-import type { Problem } from "../core/problem.js";
+import type { Problem } from "../model/problem.js";
 import type { QuestionAdapterDefinition } from "./types.js";
 import {
   caux8QuestionAdapterDefinition,
@@ -11,7 +11,7 @@ import {
   exportProblemToMoodleXml,
   moodleXmlQuestionAdapterDefinition,
   validateMoodleXmlProblem,
-} from "../platforms/moodle/index.js";
+} from "./moodle-xml.js";
 
 export interface QuestionAdapterCatalogEntry<TTargetConfig, TPlatformQuestion> {
   definition: QuestionAdapterDefinition;

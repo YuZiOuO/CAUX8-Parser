@@ -1,5 +1,5 @@
-import type { Problem, ProblemTestCase } from "../core/problem.js";
-import { problemToMoodleQuestion, type MoodleQuestion } from "../moodle/index.js";
+import type { Problem, ProblemTestCase } from "../model/problem.js";
+import { problemToMoodleQuestion, type MoodleQuestion } from "../formats/moodle/index.js";
 
 export interface YbtImportedProblem {
   source: "ybt";

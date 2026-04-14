@@ -1,12 +1,12 @@
-import type { Problem, ProblemTestCase } from "../core/problem.js";
-import { testType } from "../moodle/enums.js";
+import type { Problem, ProblemTestCase } from "../model/problem.js";
+import { testType } from "../formats/moodle/enums.js";
 import {
   createMoodleQuestion,
   createMoodleTestCase,
   tag,
   text,
   type MoodleQuestion,
-} from "../moodle/model.js";
+} from "../formats/moodle/model.js";
 
 export interface FpsImportedProblem {
   source: "fps";

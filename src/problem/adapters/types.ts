@@ -1,4 +1,4 @@
-import type { Problem } from "../core/problem.js";
+import type { Problem } from "../model/problem.js";
 
 export type AdapterAction = "upload" | "export-xml";
 

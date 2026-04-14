@@ -15,14 +15,14 @@ import {
   NScrollbar,
   createDiscreteApi,
 } from "naive-ui";
-import type { Problem } from "@/x8req/core/problem.js";
-import { exportMoodleQuestionToXml } from "@/x8req/moodle";
+import type { Problem } from "@/problem/model/problem.js";
+import { exportMoodleQuestionToXml } from "@/problem/formats/moodle";
 import {
   parseFpsProblems,
   type FpsImportedProblem,
   parseYbtProblem,
   type YbtImportedProblem,
-} from "@/x8req/importers";
+} from "@/problem/importers";
 
 const emit = defineEmits<{
   apply: [problem: Problem];

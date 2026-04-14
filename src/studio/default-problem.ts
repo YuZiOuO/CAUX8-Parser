@@ -1,4 +1,4 @@
-import type { Problem } from "@/x8req/core/problem.js";
+import type { Problem } from "@/problem/model/problem.js";
 
 export function createDefaultProblem(): Problem {
   return {

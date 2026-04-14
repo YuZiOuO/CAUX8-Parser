@@ -19,10 +19,10 @@ import {
   NTag,
   NScrollbar,
 } from "naive-ui";
-import type { QuestionAdapterCatalogEntry } from "@/x8req/adapters/catalog.js";
+import type { QuestionAdapterCatalogEntry } from "@/problem/adapters/catalog.js";
 import type { DynamicFormState, PrimitiveFormValue } from "@/studio/types";
 import type { RuntimeCommandErrorInfo } from "@/runtime/errors";
-import type { Problem } from "@/x8req/core/problem.js";
+import type { Problem } from "@/problem/model/problem.js";
 
 const props = defineProps<{
   selectedAdapter: QuestionAdapterCatalogEntry<any, any>;
